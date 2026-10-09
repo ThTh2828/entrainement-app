@@ -28,6 +28,10 @@ Une vraie installation demande une adresse **https**. Le plus simple et gratuit 
 
 N’importe quel hébergement https de fichiers statiques convient aussi.
 
+## Le coach
+
+Avant chaque séance, trois touches : sommeil, énergie, courbatures. Le coach les croise avec tes dernières saisies (fatigue, douleur, réserve) et propose un niveau : feu vert, plan normal, séance ajustée (1 série de moins sur les compléments, +15 s de repos) ou version allégée. Tu peux toujours garder le plan normal. Les jours de course, le même bilan donne un conseil de durée. Tout est calculé sur le téléphone, sans connexion.
+
 ## Tes données
 
 - Elles sont enregistrées dans le navigateur du téléphone, pour cette adresse uniquement.

@@ -132,7 +132,7 @@ p { margin: 0; }
 .acc-t { color: var(--acc); }
 
 /* ---------- structure ---------- */
-#app { max-width: 560px; margin: 0 auto; padding: 18px 16px calc(var(--tab-h) + 34px + env(safe-area-inset-bottom, 0px)); }
+#app { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 18px 16px calc(var(--tab-h) + 34px + env(safe-area-inset-bottom, 0px)); }
 .screen { display: flex; flex-direction: column; gap: 14px; }
 .screen.enter-r { animation: enterR .36s var(--ease); } .screen.enter-l { animation: enterL .36s var(--ease); } .screen.enter { animation: enterU .4s var(--ease); }
 @keyframes enterR { from { opacity: 0; transform: translateX(22px); } }
@@ -765,7 +765,35 @@ html.intro:not(.reveal) #tabs { transform: translateY(160%); }
 #tabs { transition: transform .8s var(--spring); }
 html.intro body { overflow: hidden; }
 
+/* ---------- bilan et coach ---------- */
+.chips.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); } .chips.grid3 .chip { min-width: 0; padding-inline: 4px; }
+.ckq { display: flex; flex-direction: column; gap: 14px; }
+.chip.ck0.on { background: linear-gradient(135deg, #FF8A7A, #E2453A); color: #fff; box-shadow: 0 8px 18px -10px rgba(226, 69, 58, .6); }
+.chip.ck1.on { background: linear-gradient(135deg, #FFD27A, #E9A23B); color: #2A1A00; box-shadow: 0 8px 18px -10px rgba(233, 162, 59, .6); }
+.coach { border-radius: 20px; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(145deg, var(--acc-soft), rgba(124, 92, 255, .12)); box-shadow: inset 0 0 0 1px var(--acc-line); position: relative; overflow: hidden; }
+.coach::after { content: ''; position: absolute; width: 160px; height: 160px; right: -60px; top: -70px; border-radius: 50%; background: radial-gradient(closest-side, var(--acc-soft), transparent); pointer-events: none; }
+.coach-h { display: flex; gap: 12px; align-items: center; }
+.coach-h b { font: 800 19px/1.15 var(--f-display); letter-spacing: -.01em; }
+:root[data-ui="nuit"] .coach-h b { text-transform: uppercase; letter-spacing: .04em; font-size: 17px; }
+.coach p { font-size: 14px; }
+.coach.mini { padding: 12px 14px; gap: 6px; }
+.coach.mini .coach-h b { font-size: 15px; text-transform: none; letter-spacing: 0; }
+button.coach { appearance: none; border: 0; text-align: left; color: inherit; width: 100%; }
+.coach.run { background: linear-gradient(145deg, var(--run-soft), rgba(255, 79, 139, .08)); box-shadow: inset 0 0 0 1px var(--run-line); }
+.coach-in { animation: coachIn .6s var(--spring) both; }
+.coach-in .coach-ring { animation: popIn .5s var(--spring) .15s both; }
+@keyframes coachIn { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+.coach-ring { --p: 0; position: relative; width: 52px; height: 52px; flex: none; border-radius: 50%; display: grid; place-items: center; align-content: center;
+  background: conic-gradient(var(--acc) calc(var(--p) * 1turn), var(--tint2) 0); box-shadow: 0 0 16px -4px var(--acc-glow); }
+.coach-ring::before { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: var(--glass); }
+#sheet .coach-ring::before { background: var(--sheet); }
+.coach-ring b, .coach-ring span { position: relative; line-height: 1; }
+.coach-ring b { font: 800 18px/1 var(--f-display); } .coach-ring span { font-size: 9.5px; color: var(--muted); }
+
 /* ---------- vie des écrans ---------- */
+.ghost { position: fixed; z-index: 0; pointer-events: none; animation: ghostOut .3s var(--ease) forwards !important; }
+.ghost * { animation: none !important; transition: none !important; }
+@keyframes ghostOut { to { opacity: 0; transform: translateX(var(--gx, 0)); } }
 :root[data-ui="nuit"] .hero-media::before { content: ''; position: absolute; width: 70%; aspect-ratio: 1; left: 40%; top: -20%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 79, 139, .35), transparent); animation: orb 9s ease-in-out infinite alternate; pointer-events: none; }
 :root[data-ui="nuit"] .hero.run .hero-media::before { background: radial-gradient(closest-side, rgba(140, 108, 255, .45), transparent); }
 @keyframes orb { to { transform: translate(-45%, 35%) scale(1.25); } }
@@ -1355,7 +1383,7 @@ function defaults() {
       pushVariant: 'pushup_knee', rest: {}, sound: true, vibrate: true, nutritionNotes: [], theme: 'nuit', themeV: 2, anim3d: true
     },
     plan: { startDate: null, seq: [1, 2, 3, 4, 5, 6, 7, 8], runs: JSON.parse(JSON.stringify(RUN_DEFAULT)) },
-    sessions: {}, runs: {}, weights: [], shakes: {}, mobility: {}, levels: {},
+    sessions: {}, runs: {}, weights: [], shakes: {}, mobility: {}, checkins: {}, levels: {},
     sugg: { dismissed: {} }, kcalSugg: { dismissedWeek: null }, runClearedAt: null,
     active: null, timer: null, stopwatch: null
   };
@@ -1388,7 +1416,7 @@ function normalize(o) {
       if (isObj(r)) for (const k of ['tue', 'sat']) if (typeof r[k] === 'number' && r[k] >= 0 && r[k] <= 90) out.plan.runs[w][k] = r[k];
     }
   }
-  for (const k of ['sessions', 'runs', 'shakes', 'mobility']) if (isObj(o[k])) for (const dk in o[k]) if (isDate(dk) && (isObj(o[k][dk]) || typeof o[k][dk] === 'boolean')) out[k][dk] = o[k][dk];
+  for (const k of ['sessions', 'runs', 'shakes', 'mobility', 'checkins']) if (isObj(o[k])) for (const dk in o[k]) if (isDate(dk) && (isObj(o[k][dk]) || typeof o[k][dk] === 'boolean')) out[k][dk] = o[k][dk];
   for (const dk in out.sessions) { const s = out.sessions[dk]; if (!Array.isArray(s.ex) || !SESSIONS[s.kind]) delete out.sessions[dk]; else s.ex = s.ex.filter(e => isObj(e) && EX[e.id]).map(e => ({ ...e, sets: Array.isArray(e.sets) ? e.sets.filter(isObj) : [] })); }
   if (Array.isArray(o.weights)) out.weights = o.weights.filter(w => isObj(w) && isDate(w.date) && typeof w.kg === 'number' && w.kg > 20 && w.kg < 300).map(w => ({ date: w.date, kg: w.kg }));
   if (isObj(o.levels)) for (const k in o.levels) if (EX[k] && isObj(o.levels[k]) && Number.isInteger(o.levels[k].level)) out.levels[k] = { level: o.levels[k].level, hist: Array.isArray(o.levels[k].hist) ? o.levels[k].hist : [] };
@@ -1451,10 +1479,11 @@ function canRepeat(idx) { return !!S.plan.startDate && S.plan.seq.length < 14 &&
 function canUndoRepeat(idx) { const pw = S.plan.seq[idx]; return idx > 0 && S.plan.seq.slice(0, idx).includes(pw) && !hasLogsFrom(weekStart(idx)); }
 
 /* ---- séances ---- */
-function prescFor(sess, slot) {
+function prescFor(sess, slot, base) {
   const wk = WEEKS[sess.pw - 1];
   let sets = slot < 3 ? wk.setsMain : wk.setsComp, rmin = wk.rir[0], rmax = wk.rir[1];
   if (sess.reduced) { sets = Math.max(1, sets - 1); rmin += 1; rmax += 1; }
+  if (!base && sess.adapt && sess.adapt.comp && slot >= 3) sets = Math.max(1, sets - sess.adapt.comp);
   return { sets, rmin, rmax };
 }
 function rirLabel(a, b) { return a === b ? String(a) : a + '–' + b; }
@@ -1524,7 +1553,7 @@ function doneLogs(id) {
     .flatMap(s => s.ex.filter(e => e.id === id && !e.skipped && e.sets.length).map(e => ({ s, e })));
 }
 function passes({ s, e }) {
-  const ex = EX[e.id], pr = prescFor(s, e.slot);
+  const ex = EX[e.id], pr = prescFor(s, e.slot, true);
   if (e.sets.length < pr.sets || e.tech !== 'clean') return false;
   const top = ex.unit === 'sec' ? targetSec(e.id, e.level) : ex.range[1];
   const rmin = ex.unit === 'sec' ? 5 : pr.rmin;
@@ -1570,6 +1599,55 @@ function progressIds() {
   const ids = ['squat', 'squat_tempo', 'pushup_knee', 'pushup_wall', 'row_band', 'glute_bridge', 'dead_bug', 'side_abduction', 'band_pull_apart', 'side_plank_knee'];
   return ids.filter(id => id !== 'pushup_wall' || S.profile.pushVariant === 'pushup_wall' || doneLogs('pushup_wall').length);
 }
+
+/* ---- bilan avant séance et coach local ----
+   Trois réponses (sommeil, énergie, courbatures) + ce que tu as noté aux séances précédentes
+   (fatigue, douleur, réserve) donnent un niveau : feu vert, normal, ajusté ou allégé. Tout reste sur le téléphone. */
+const CHECK_Q = [
+  { k: 'sleep', t: 'Sommeil', o: ['Mauvais', 'Correct', 'Bon'] },
+  { k: 'energy', t: 'Énergie', o: ['Basse', 'Normale', 'Haute'] },
+  { k: 'sore', t: 'Courbatures', o: ['Fortes', 'Légères', 'Aucune'] }
+];
+const COACH_TXT = {
+  push: { t: 'Feu vert', pill: 'acc', s: 'Tu es en forme : plan complet. Vise le haut de la fourchette tant que la technique reste propre.' },
+  normal: { t: 'Plan normal', pill: '', s: 'Rien à changer aujourd’hui : séance prévue, réserve prévue.' },
+  ease: { t: 'Séance ajustée', pill: 'warn', s: '1 série de moins sur les exercices complémentaires et 15 s de repos en plus. Les exercices principaux restent au plan.' },
+  light: { t: 'Version allégée', pill: 'warn', s: '1 série de moins partout, 1 répétition de plus en réserve et 30 s de repos en plus. Elle ne compte pas pour la progression.' }
+};
+const RUN_COACH = {
+  push: 'La sortie prévue, en restant à 3–4 sur 10.',
+  normal: 'Sortie prévue, effort facile.',
+  ease: 'Raccourcis la sortie (environ 2/3 du temps prévu) ou alterne course et marche.',
+  light: 'Remplace la course par 20 min de marche, ou prends ta journée.'
+};
+function checkComplete(c) { return !!c && CHECK_Q.every(q => Number.isInteger(c[q.k])); }
+function lastDoneSession(before) { return Object.values(S.sessions).filter(x => x.status === 'done' && x.date < before).sort((a, b) => b.date.localeCompare(a.date))[0] || null; }
+function tooHard(sess) {
+  let n = 0, low = 0;
+  sess.ex.forEach(e => { if (e.skipped || EX[e.id].unit === 'sec') return; const pr = prescFor(sess, e.slot); e.sets.forEach(x => { if (typeof x.rir === 'number') { n++; if (x.rir < pr.rmin) low++; } }); });
+  return n >= 4 && low / n >= 0.4;
+}
+function coachPlan(date, c) {
+  const why = [];
+  let score = checkComplete(c) ? c.sleep + c.energy + c.sore : 4;
+  if (checkComplete(c)) {
+    if (c.sleep === 0) why.push('nuit difficile');
+    if (c.energy === 0) why.push('énergie basse');
+    if (c.sore === 0) why.push('courbatures fortes');
+  }
+  const prev = lastDoneSession(date), recent = prev && diffD(prev.date, date) <= 4;
+  if (recent && prev.fatigue >= 4) { score -= 1; why.push('dernière séance très fatigante'); }
+  if (recent && prev.pain) { score -= 2; why.push('gêne notée à la dernière séance'); }
+  if (recent && tooHard(prev)) { score -= 1; why.push('réserve souvent dépassée la dernière fois'); }
+  const flag = lastPainFlag(); if (flag && diffD(flag, date) <= 3) { score -= 1; why.push('douleur récente en course'); }
+  let level = score >= 5 ? 'push' : score >= 3 ? 'normal' : score >= 1 ? 'ease' : 'light';
+  if (level === 'push' && why.length) level = 'normal';
+  if (checkComplete(c) && c.sore === 0 && (level === 'push' || level === 'normal')) level = 'ease';
+  if (!why.length && (level === 'normal' || level === 'push') && checkComplete(c) && score >= 5) why.push('bien reposé');
+  return { level, why, comp: level === 'ease' ? 1 : 0, rest: level === 'ease' ? 15 : level === 'light' ? 30 : 0, score: Math.max(0, score) };
+}
+function restFor(sess, id) { return (S.profile.rest[id] || EX[id].rest[0]) + (sess && sess.adapt ? sess.adapt.rest || 0 : 0); }
+function formeLabel(c) { return checkComplete(c) ? CHECK_Q.map(q => q.t.toLowerCase() + ' ' + q.o[c[q.k]].toLowerCase()).join(' · ') : ''; }
 
 /* ---- course ---- */
 const RUNKINDS = { run: 'Course facile', runwalk: 'Course et marche', walk: 'Marche', badminton: 'Badminton (remplace la sortie)', skipped: 'Non faite' };
@@ -2034,6 +2112,7 @@ function runHero(ci) {
   } else {
     h += '<div class="hero-name">' + planned + ' min</div><div class="hero-sub" style="margin:0">+ 5 min de marche avant et après</div>';
     if (adv.level === 'hold') h += alertBox('warn', 'warn', adv.text);
+    if (ci.date === today()) { const ck = S.checkins[ci.date]; h += checkComplete(ck) ? '<button class="coach mini run" data-act="ckOpen" data-date="' + ci.date + '" data-kind="run"><div class="coach-h">' + coachRing(coachPlan(ci.date, ck).score) + '<div><div class="eyebrow">Coach · ta forme du jour</div><b>' + (COACH_TXT[coachPlan(ci.date, ck).level].t) + '</b><p style="margin-top:2px;font-size:13px">' + RUN_COACH[coachPlan(ci.date, ck).level] + '</p></div></div></button>' : '<button class="btn pill block" data-act="ckOpen" data-date="' + ci.date + '" data-kind="run">' + I.spark + 'Comment tu te sens ?</button>'; }
     h += '<div class="chips">' + pill('Effort 3–4/10', 'run') + pill('Parler en phrases') + pill('Terrain plat') + '</div><button class="btn runb xl block shine" data-act="runSheet" data-date="' + ci.date + '">Saisir ma sortie</button>';
   }
   return h + '</div></section>';
@@ -2491,7 +2570,7 @@ function renderSession() {
 function warmView(s) {
   const hasBand = s.ex.some(e => EX[e.id].band);
   s.warmChk = s.warmChk || [];
-  let h = '<div class="stack"><div class="eyebrow">Avant de commencer · 6 à 8 min</div><h2 class="ex-title">Échauffement</h2></div>';
+  let h = '<div class="stack"><div class="eyebrow">Avant de commencer · 6 à 8 min</div><h2 class="ex-title">Échauffement</h2></div>' + coachBanner(s);
   h += '<ul class="check-list">' + WARMUP.map((w, i) => '<li><button class="' + (s.warmChk[i] ? 'on' : '') + '" data-act="warmChk" data-i="' + i + '"><span class="cb">' + I.check + '</span><span>' + w + '</span></button></li>').join('') + '</ul>';
   if (hasBand) h += alertBox('warn', 'warn', '<b>Bande :</b> ni entaille ni zone blanchie. Au tirage, au milieu des semelles chaussées.');
   if (s.status === 'active') h += '<label class="toggle card" style="padding:10px 14px;flex-direction:row"><span><b>Version allégée</b><br><span class="note">−1 série, +1 en réserve</span></span><input type="checkbox" data-chg="sReduced"' + (s.reduced ? ' checked' : '') + '></label>';
@@ -2503,7 +2582,7 @@ function exView(s, i) {
   const e = s.ex[i], ex = EX[e.id], pr = prescFor(s, e.slot), sl = SESSIONS[s.kind][e.slot], n = s.ex.length;
   const lvl = e.level ? levelLabel(e.id, e.level) : (ex.unit === 'sec' ? levelLabel(e.id, e.level) : '');
   let h = '<div class="stack"><div class="eyebrow">' + (e.slot < 3 ? 'Principal' : 'Complémentaire') + (lvl ? ' · ' + lvl : '') + '</div><h2 class="ex-title">' + ex.name + '</h2>' +
-    '<div class="ex-meta"><span><b>' + pr.sets + ' ×</b> ' + rangeLabel(e.id) + '</span><span>Réserve <b>' + (ex.unit === 'sec' ? '5 s' : rirLabel(pr.rmin, pr.rmax)) + '</b> <button class="info" data-act="rirInfo" aria-label="Qu’est-ce que la réserve ?">' + I.q + '</button></span><span>Repos <b>' + restLabel(e.id) + '</b></span></div></div>';
+    '<div class="ex-meta"><span><b>' + pr.sets + ' ×</b> ' + rangeLabel(e.id) + '</span><span>Réserve <b>' + (ex.unit === 'sec' ? '5 s' : rirLabel(pr.rmin, pr.rmax)) + '</b> <button class="info" data-act="rirInfo" aria-label="Qu’est-ce que la réserve ?">' + I.q + '</button></span><span>Repos <b>' + restLabel(e.id) + (s.adapt && s.adapt.rest ? ' +' + s.adapt.rest + ' s' : '') + '</b></span></div></div>';
   if (sl.alt && !e.sets.length && s.status === 'active') h += '<div class="seg" role="group" aria-label="Variante">' + [sl.ex, sl.alt].map(v => '<button class="' + (e.id === v ? 'on' : '') + '" data-act="variant" data-v="' + v + '" aria-pressed="' + (e.id === v) + '">' + EX[v].variant + '</button>').join('') + '</div>';
   h += stageHTML(e.id, 'sess-' + i + '-' + e.id);
   h += '<button class="footline glass" data-act="cuesSheet" data-id="' + e.id + '">' + I.book.replace('<svg', '<svg style="color:var(--acc)"') + '<span style="color:var(--fg);font-weight:600">Consignes' + (ex.safety || ex.stopRule ? ' et sécurité' : '') + '</span>' + CHEV + '</button>';
@@ -2568,12 +2647,48 @@ function summaryView(s) {
   if (!editing) h += '<button class="linkbtn" data-act="sMenu" style="align-self:center">Autres options</button>';
   return h;
 }
+function openCheck(date, kind) {
+  const rt = document.getElementById('reducedToggle');
+  ui.ck = { date, kind, light: kind === 'strength' && !!(rt && rt.checked), anim: false };
+  openSheet(checkSheetHTML(), checkSheetHTML);
+}
+function coachRing(score) {
+  const p = Math.max(0, Math.min(6, score)) / 6;
+  return '<div class="coach-ring" style="--p:' + p.toFixed(3) + '"><b>' + Math.max(0, Math.min(6, score)) + '</b><span>/6</span></div>';
+}
+function checkSheetHTML() {
+  const { date, kind, light } = ui.ck, c = S.checkins[date] || {}, run = kind === 'run';
+  let h = sheetHead('Comment tu te sens ?', 'Bilan avant ' + (run ? 'la sortie' : 'la séance'));
+  h += '<div class="ckq">' + CHECK_Q.map(q => '<div class="field"><span>' + q.t + '</span><div class="chips grid3">' + q.o.map((o, i) => '<button class="chip ck' + i + (c[q.k] === i ? ' on' : '') + '" data-act="ckSet" data-k="' + q.k + '" data-v="' + i + '">' + o + '</button>').join('') + '</div></div>').join('') + '</div>';
+  if (checkComplete(c)) {
+    const pl = coachPlan(date, c), lvl = light && !run ? 'light' : pl.level, T = COACH_TXT[lvl];
+    const why = light && !run ? ['version allégée choisie'].concat(pl.why) : pl.why;
+    h += '<div><section class="coach' + (ui.ck.anim ? ' coach-in' : '') + '"><div class="coach-h">' + coachRing(pl.score) + '<div><div class="eyebrow">Coach</div><b>' + T.t + '</b></div></div><p>' + (run ? RUN_COACH[lvl] : T.s) + '</p>' +
+      (why.length ? '<div class="chips">' + why.map(w => pill(esc(w))).join('') + '</div>' : '') + '</section></div>';
+    if (run) h += '<button class="btn runb xl block" data-act="closeSheet">Compris</button>';
+    else {
+      h += '<button class="btn primary xl block shine" data-act="ckGo" data-m="coach">' + I.play + (lvl === 'ease' || lvl === 'light' ? 'Démarrer la séance ajustée' : 'Démarrer la séance') + '</button>';
+      if (lvl === 'ease' || (lvl === 'light' && !light)) h += '<button class="btn ghost block" data-act="ckGo" data-m="plan">Garder le plan normal</button>';
+    }
+  } else {
+    h += '<p class="note">Trois touches : le coach ajuste ' + (run ? 'ta sortie' : 'ta séance') + ' selon ta forme et tes dernières saisies. Rien ne quitte ton téléphone.</p>';
+    if (!run) h += '<button class="linkbtn" data-act="ckGo" data-m="skip" style="align-self:center">Passer et démarrer</button>';
+  }
+  return h;
+}
+function coachBanner(s) {
+  if (!s.adapt && !s.check) return '';
+  const lvl = s.adapt ? s.adapt.level : (s.reduced ? 'light' : 'normal'), T = COACH_TXT[lvl] || COACH_TXT.normal;
+  const why = s.adapt && s.adapt.why && s.adapt.why.length ? ' <span class="note">(' + esc(s.adapt.why.join(', ')) + ')</span>' : '';
+  return '<div class="coach mini"><div class="coach-h"><span class="ic fill">' + I.spark + '</span><div><div class="eyebrow">Coach' + (s.adapt ? '' : ' · plan normal gardé') + '</div><b>' + (s.adapt ? T.t : 'Plan normal') + '</b></div></div>' + (s.adapt ? '<p>' + T.s + why + '</p>' : '') + '</div>';
+}
 function sessionSummarySheet(date) {
   const s = S.sessions[date]; if (!s) return;
   let h = sheetHead('Séance ' + s.kind, fmtDL(s.date) + ' · semaine ' + s.pw + (s.reduced ? ' · allégée' : ''));
   h += '<div class="mini3"><div><b>' + Math.round(sessDuration(s) / 60000) + '</b><span>minutes</span></div><div><b>' + doneSetsCount(s) + '</b><span>séries</span></div><div><b>' + (s.fatigue || '—') + '</b><span>fatigue /5</span></div></div>';
   h += '<div class="list">' + s.ex.map(e => { const ex = EX[e.id]; return '<div class="li"><div><div class="t">' + ex.short + '</div><div class="s tnum">' + (e.skipped ? 'Passé' : e.sets.length ? e.sets.map(x => x.reps).join(' · ') + unitShort(ex) + ' · réserve ' + e.sets.map(x => x.rir).join('/') : 'Aucune série') + (e.band ? ' · ' + esc(e.band) + (e.grip ? ', ' + esc(e.grip) : '') : '') + '</div></div>' + (e.tech === 'clean' ? pill('propre', 'acc') : e.tech === 'fix' ? pill('à revoir', 'warn') : '') + '</div>'; }).join('') + '</div>';
   if (s.pain) h += alertBox('warn', 'warn', 'Douleur notée : ' + esc((s.painWhere || []).join(', ') || 'non précisée'));
+  if (s.check) h += '<p class="small"><b>Forme :</b> ' + formeLabel(s.check) + (s.adapt ? ' · coach : ' + (COACH_TXT[s.adapt.level] || COACH_TXT.normal).t.toLowerCase() : '') + '</p>';
   if (s.note) h += '<p class="small">' + esc(s.note) + '</p>';
   h += s.status === 'done' ? '<button class="btn block" data-act="editSession" data-date="' + date + '">Corriger</button>' : '<button class="btn primary block" data-act="openSessionDate" data-date="' + date + '">Reprendre</button>';
   openSheet(h);
@@ -2645,7 +2760,7 @@ async function requestWake() { if (wake || document.hidden || !('wakeLock' in na
 function releaseWake() { if (wake) { try { wake.release(); } catch (e) { } wake = null; } }
 
 /* ---- actions de séance ---- */
-function startSession(date) {
+function startSession(date, opts = {}) {
   const other = curSess();
   if (other && other.status === 'active' && other.date !== date) { toast('Une séance du ' + fmtD(other.date) + ' est déjà en cours.'); ui.sess = true; closeSheet(true); renderSession(); return; }
   let s = S.sessions[date];
@@ -2653,7 +2768,9 @@ function startSession(date) {
     const ci = calInfo(date);
     if (ci.type !== 'strength') return;
     const rt = document.getElementById('reducedToggle');
-    s = newSession(date, ci, rt && rt.checked);
+    s = newSession(date, ci, opts.reduced != null ? opts.reduced : rt && rt.checked);
+    if (opts.adapt) s.adapt = opts.adapt;
+    if (opts.check) s.check = { ...opts.check };
     S.sessions[date] = s;
   }
   if (s.status === 'done') { sessionSummarySheet(date); return; }
@@ -2701,7 +2818,7 @@ const SACT = {
       ui.fresh = { i: s.pos, k };
       if (isNew && s.status === 'active') {
         const ex = EX[e.id], pr = prescFor(s, e.slot), lastOfEx = e.sets.length >= pr.sets;
-        startRest(S.profile.rest[e.id] || ex.rest[0], lastOfEx ? 'puis exercice suivant' : 'puis série ' + (e.sets.length + 1), e.id);
+        startRest(restFor(s, e.id), lastOfEx ? 'puis exercice suivant' : 'puis série ' + (e.sets.length + 1), e.id);
       }
       save(); renderSession();
     }, RM() ? 0 : 230);
@@ -2819,7 +2936,7 @@ function renderPrint() {
 /* ===== Navigation, événements, démarrage ===== */
 const ROUTES = { today: scrToday, program: scrProgram, progress: scrProgress, profile: scrProfile };
 const ORDER = ['today', 'program', 'progress', 'profile'];
-let route = 'today', prevRoute = null;
+let route = 'today', prevRoute = null; const SEEN = new Set();
 function readRoute() { const h = (location.hash || '').replace('#', ''); return (ROUTES[h] || h === 'print') ? h : 'today'; }
 function render(opts = {}) {
   const app = document.getElementById('app'), pr = document.getElementById('print'), tabs = document.getElementById('tabs');
@@ -2828,13 +2945,24 @@ function render(opts = {}) {
   const changed = prevRoute !== route;
   ANIM = changed || !!opts.anim;
   preserveStages(app);
+  /* l’ancien écran reste affiché le temps du fondu : plus de flash vide entre deux onglets */
+  const old = changed && prevRoute && prevRoute !== 'print' && !RM() ? app.firstElementChild : null;
+  if (old) {
+    const r = old.getBoundingClientRect(), g = old.cloneNode(true);
+    g.classList.remove('stagger', 'enter', 'enter-r', 'enter-l'); g.classList.add('ghost'); g.removeAttribute('id');
+    g.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+    Object.assign(g.style, { top: r.top + 'px', left: r.left + 'px', width: r.width + 'px' });
+    g.style.setProperty('--gx', (ORDER.indexOf(route) > ORDER.indexOf(prevRoute) ? -18 : 18) + 'px');
+    document.querySelectorAll('.ghost').forEach(n => n.remove());
+    document.body.appendChild(g); setTimeout(() => g.remove(), 260);
+  }
   app.innerHTML = ROUTES[route]();
   restoreStages(app);
   const scr = app.firstElementChild;
   if (changed && scr && !RM()) scr.classList.add(prevRoute == null || prevRoute === 'print' ? 'enter' : ORDER.indexOf(route) > ORDER.indexOf(prevRoute) ? 'enter-r' : 'enter-l');
   const anim = ANIM;
   const ringGo = () => { app.querySelectorAll('.wring .f').forEach(c => c.style.strokeDashoffset = c.dataset.off); app.querySelectorAll('.wring .tip').forEach(g => g.style.transform = 'rotate(' + g.dataset.rot + 'deg)'); };
-  if (anim && !RM()) { const go = () => { requestAnimationFrame(() => requestAnimationFrame(ringGo)); countUps(app); }; INTRO ? INTRO.then(go) : go(); }
+  if (anim && !RM()) { const first = !SEEN.has(route); SEEN.add(route); const go = () => { requestAnimationFrame(() => requestAnimationFrame(ringGo)); if (first) countUps(app); }; INTRO ? INTRO.then(go) : go(); }
   else { app.querySelectorAll('.wring .f, .wring .tip').forEach(c => c.style.transition = 'none'); ringGo(); }
   prevRoute = route; ANIM = false;
   const idx = ORDER.indexOf(route), ind = tabs.querySelector('.ind');
@@ -2844,7 +2972,7 @@ function render(opts = {}) {
 function rerender() { render(); refreshSheet(); }
 /* Les chiffres clés défilent jusqu’à leur valeur quand un écran apparaît. */
 function countUps(root) {
-  root.querySelectorAll('.wring .pc b, .bignum, .mini3 b, .meta b, .daily .val, .hero-name').forEach((el, k) => {
+  root.querySelectorAll('.wring .pc b, .bignum').forEach((el, k) => {
     const tn = [...el.childNodes].find(n => n.nodeType === 3 && /\d/.test(n.nodeValue));
     if (!tn) return;
     const txt = tn.nodeValue, m = txt.match(/^(\D*?)(\d+(?:[.,]\d+)?)(.*)$/s);
@@ -2921,7 +3049,28 @@ const ACT = {
   startSheet() { startSheet(); },
   weightsSheet() { weightsSheet(); },
   profSheet(el) { profSheet(el.dataset.k); },
-  startSession(el) { startSession(el.dataset.date); },
+  startSession(el) {
+    const d = el.dataset.date, ci = calInfo(d);
+    if (!S.sessions[d] && ci.type === 'strength' && d === today() && !curSess()) { openCheck(d, 'strength'); return; }
+    startSession(d);
+  },
+  ckOpen(el) { openCheck(el.dataset.date, el.dataset.kind || 'strength'); },
+  ckSet(el) {
+    const { date } = ui.ck, was = checkComplete(S.checkins[date]);
+    S.checkins[date] = { ...(S.checkins[date] || {}), [el.dataset.k]: +el.dataset.v, at: Date.now() };
+    save(); haptic(8);
+    ui.ck.anim = !was && checkComplete(S.checkins[date]);
+    refreshSheet(); ui.ck.anim = false;
+    if (ui.ck.kind === 'run') render();
+  },
+  ckGo(el) {
+    const { date, light } = ui.ck, c = S.checkins[date], m = el.dataset.m;
+    if (m === 'skip' || !checkComplete(c)) { startSession(date, { reduced: light }); return; }
+    const pl = coachPlan(date, c), lvl = light ? 'light' : pl.level;
+    const adapt = { level: lvl, why: pl.why, comp: lvl === 'ease' ? 1 : 0, rest: lvl === 'ease' ? 15 : lvl === 'light' ? 30 : 0, at: Date.now() };
+    if (m === 'plan') startSession(date, { reduced: light, check: c });
+    else startSession(date, { reduced: lvl === 'light', adapt, check: c });
+  },
   openSession() { ui.sess = true; renderSession(); },
   openSessionDate(el) { startSession(el.dataset.date); },
   viewSession(el) { sessionSummarySheet(el.dataset.date); },
@@ -3008,7 +3157,7 @@ document.addEventListener('pointerdown', e => {
   s.style.width = s.style.height = d + 'px'; s.style.left = (e.clientX - r.left - d / 2) + 'px'; s.style.top = (e.clientY - r.top - d / 2) + 'px';
   el.appendChild(s); setTimeout(() => s.remove(), 650);
 }, { passive: true });
-const POP = new Set(['rir', 'fatigue', 'pain', 'painWhere', 'rf', 'rfFlag', 'selWeek', 'tech', 'variant', 'setPtab', 'tPreset', 'setStart']);
+const POP = new Set(['ckSet', 'rir', 'fatigue', 'pain', 'painWhere', 'rf', 'rfFlag', 'selWeek', 'tech', 'variant', 'setPtab', 'tPreset', 'setStart']);
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   unlockAudio();
@@ -3046,7 +3195,7 @@ document.addEventListener('change', e => {
   if (c === 'bool') { setPath(el.dataset.path, el.checked); save(); return; }
   if (c === 'shake') { const d = el.dataset.date; const prev = S.shakes[d] || {}; S.shakes[d] = { taken: el.checked, kcal: el.checked ? (prev.kcal ?? S.profile.recipe.kcal ?? null) : prev.kcal ?? null }; save(); haptic(8); setTimeout(() => { rerender(); if (el.checked) { const k = document.getElementById('shakeKcal'); if (k) k.classList.add('pop'); } }, RM() ? 0 : 280); return; }
   if (c === 'runDurIn') { const pw = +el.dataset.pw, k = el.dataset.k; S.plan.runs[pw][k] = clamp(Math.round(+el.value || 0), 0, 90); el.value = S.plan.runs[pw][k]; save(); render(); return; }
-  if (c === 'sReduced') { const s = curSess(); if (s && s.status === 'active') { s.reduced = el.checked; save(); haptic(6); setTimeout(renderSession, RM() ? 0 : 280); } return; }
+  if (c === 'sReduced') { const s = curSess(); if (s && s.status === 'active') { s.reduced = el.checked; if (!el.checked && s.adapt && s.adapt.level === 'light') s.adapt = null; save(); haptic(6); setTimeout(renderSession, RM() ? 0 : 280); } return; }
   if (c === 'band' || c === 'grip') { const s = curSess(), ex = s && s.ex[+el.dataset.i]; if (ex) { ex[c] = el.value.slice(0, 60); save(); } return; }
 });
 document.addEventListener('input', e => {
