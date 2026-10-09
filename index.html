@@ -396,6 +396,17 @@ table.t td { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--line); } tab
 .stage-lbl { position: absolute; left: 10px; top: 10px; right: 10px; display: flex; justify-content: space-between; gap: 8px; font-size: 12px; pointer-events: none; }
 .stage-lbl b { color: var(--fg); font-weight: 600; background: var(--glass2); padding: 5px 10px; border-radius: 999px; box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .18); }
 .stage-lbl span { color: var(--muted); padding: 5px 0; }
+.stage .s3d { pointer-events: auto; appearance: none; border: 0; font: 800 12px/1 var(--f-body); letter-spacing: .05em; padding: 7px 12px; border-radius: 999px; background: var(--glass2); color: var(--muted); box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .22); transition: background-color .2s, color .2s, transform .4s var(--spring); }
+.stage .s3d.on { background: var(--acc-grad); color: var(--acc-ink); }
+.stage .s3d:active { transform: scale(.88); }
+.stage.is3d > svg.fig { visibility: hidden; }
+.stage .stage-lbl, .stage .stage-ctl, .stage .s3d-hint { z-index: 2; }
+.stage canvas.c3d { z-index: 1; position: absolute; left: 0; top: 0; touch-action: pan-y; cursor: grab; animation: fadeIn .5s var(--ease); }
+.stage canvas.c3d.drag { cursor: grabbing; }
+.stage .s3d-hint { position: absolute; left: 50%; bottom: 62px; transform: translateX(-50%); font-size: 12px; font-weight: 600; color: var(--muted); background: var(--glass2); padding: 5px 11px; border-radius: 999px; opacity: 0; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .2); }
+.stage.is3d .s3d-hint { animation: hint 3.2s .5s both; }
+@keyframes hint { 12%, 78% { opacity: 1; } 100% { opacity: 0; } }
+.stage.loading3d::after { content: 'Chargement 3D…'; position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); font-size: 12px; font-weight: 600; color: var(--muted); background: var(--glass2); padding: 6px 12px; border-radius: 999px; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .pair figure { margin: 0; display: flex; flex-direction: column; gap: 4px; }
 .pair figcaption { font-size: 11.5px; color: var(--muted); text-align: center; font-weight: 600; }
@@ -1134,7 +1145,7 @@ function defaults() {
     profile: {
       name: 'Théo', heightCm: 173, startWeightKg: 50, gainLowG: 200, gainHighG: 300, proteinG: 80,
       recipe: { text: '', kcal: null, protein: null }, bands: [], medical: { date: '', note: '' },
-      pushVariant: 'pushup_knee', rest: {}, sound: true, vibrate: true, nutritionNotes: [], theme: 'peche'
+      pushVariant: 'pushup_knee', rest: {}, sound: true, vibrate: true, nutritionNotes: [], theme: 'peche', anim3d: true
     },
     plan: { startDate: null, seq: [1, 2, 3, 4, 5, 6, 7, 8], runs: JSON.parse(JSON.stringify(RUN_DEFAULT)) },
     sessions: {}, runs: {}, weights: [], shakes: {}, mobility: {}, levels: {},
@@ -1159,6 +1170,7 @@ function normalize(o) {
     if (typeof p.sound === 'boolean') out.profile.sound = p.sound;
     if (typeof p.vibrate === 'boolean') out.profile.vibrate = p.vibrate;
     if (['peche', 'menthe', 'dark'].includes(p.theme)) out.profile.theme = p.theme;
+    if (typeof p.anim3d === 'boolean') out.profile.anim3d = p.anim3d;
     if (Array.isArray(p.nutritionNotes)) out.profile.nutritionNotes = p.nutritionNotes.filter(n => isObj(n) && isDate(n.date)).map(n => ({ date: n.date, text: String(n.text || '').slice(0, 200) }));
   }
   if (isObj(o.plan)) {
@@ -1407,6 +1419,218 @@ function kcalSuggestion() {
   return { weeks: last3 };
 }
 
+/* ===== Mannequin 3D : Three.js chargé à la demande, poses identiques aux silhouettes 2D ===== */
+const M3 = (() => {
+  const SC = 0.01;
+  let prom = null;
+  const ok = (() => { try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); } catch (e) { return false; } })();
+  function load() {
+    if (window.THREE) return Promise.resolve(window.THREE);
+    if (!prom) prom = new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = FRAMED ? 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js' : 'vendor/three.min.js';
+      s.async = true;
+      s.onload = () => (window.THREE ? res(window.THREE) : rej(new Error('three')));
+      s.onerror = () => { prom = null; s.remove(); rej(new Error('three')); };
+      document.head.appendChild(s);
+    });
+    return prom;
+  }
+  const isFront = ex => ex === EX.side_abduction || ex === EX.band_pull_apart || ex === EX.side_plank_knee;
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  class View {
+    constructor(host, ex) {
+      const T = THREE;
+      this.T = T; this.ex = ex; this.host = host; this.front = isFront(ex);
+      const cs = getComputedStyle(host.querySelector('svg.fig') || host);
+      const col = (v, d) => { const x = cs.getPropertyValue(v).trim(); return new T.Color(x && x[0] === '#' ? x : d); };
+      const r = this.renderer = new T.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
+      r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      r.shadowMap.enabled = true; r.shadowMap.type = T.PCFSoftShadowMap;
+      r.domElement.className = 'c3d';
+      host.appendChild(r.domElement);
+      const sc = this.scene = new T.Scene();
+      this.cam = new T.PerspectiveCamera(30, 1, 0.05, 40);
+      sc.add(new T.HemisphereLight(0xffffff, 0xcfc2bd, 0.72));
+      const key = new T.DirectionalLight(0xffffff, 0.78);
+      key.position.set(1.6, 3.4, 2.6); key.castShadow = true;
+      key.shadow.mapSize.set(1024, 1024); key.shadow.radius = 4; key.shadow.bias = -0.0008;
+      Object.assign(key.shadow.camera, { left: -2.2, right: 2.2, top: 2.2, bottom: -2.2, near: 0.5, far: 9 });
+      sc.add(key);
+      const rim = new T.DirectionalLight(0xffffff, 0.28); rim.position.set(-2.5, 1.5, -2); sc.add(rim);
+      const mats = this.mats = {
+        skin: new T.MeshStandardMaterial({ color: col('--skin', '#D9A27E'), roughness: 0.55, metalness: 0 }),
+        top: new T.MeshStandardMaterial({ color: col('--olive', '#2F2C30'), roughness: 0.82 }),
+        white: new T.MeshStandardMaterial({ color: 0xf7f7f5, roughness: 0.72 }),
+        sole: new T.MeshStandardMaterial({ color: col('--acc', '#E57A60'), roughness: 0.6 }),
+        hair: new T.MeshStandardMaterial({ color: col('--hair', '#2B1E18'), roughness: 0.9 }),
+        band: new T.MeshStandardMaterial({ color: col('--run', '#7C76E6'), roughness: 0.5 }),
+        mat: new T.MeshStandardMaterial({ color: 0xe9e2df, roughness: 0.95 }),
+        wall: new T.MeshStandardMaterial({ color: 0xe6e0dd, roughness: 0.95 })
+      };
+      const matBox = new T.Mesh(new T.BoxGeometry(2.84, 0.07, 0.95), mats.mat);
+      matBox.position.set(0, -0.035, 0); matBox.receiveShadow = true; sc.add(matBox);
+      const ground = new T.Mesh(new T.PlaneGeometry(10, 10), new T.ShadowMaterial({ opacity: 0.12 }));
+      ground.rotation.x = -Math.PI / 2; ground.position.y = -0.069; ground.receiveShadow = true; sc.add(ground);
+      if (ex.wall) { const w = new T.Mesh(new T.BoxGeometry(0.08, 1.7, 1.5), mats.wall); w.position.set((ex.wall + 4 - 160) * SC, 0.85, 0); w.receiveShadow = true; sc.add(w); }
+      this.parts = []; this.geos = [];
+      this.Y = new T.Vector3(0, 1, 0); this.tmp = new T.Vector3(); this.tmp2 = new T.Vector3(); this.m4 = new T.Matrix4();
+      this.build();
+      this.fit();
+      this.az0 = ex.wall ? -0.6 : 0.5; this.az = this.az0; this.el = 0.2;
+      this.bindDrag();
+      this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(host);
+      this.resize();
+    }
+    /* points 3D d’une pose */
+    lift(t, side) {
+      const T = this.T, p = this.ex.pose(t, side), o = FIG.solve(p);
+      const V = (pt, z) => new T.Vector3((pt[0] - 160) * SC, (172 - pt[1]) * SC, z * SC);
+      const L = { o };
+      if (!this.front) {
+        const zs = 15, zh = 9;
+        L.sN = V(o.sN, zs); L.sF = V(o.sF, -zs); L.hN = V(o.hN, zh); L.hF = V(o.hF, -zh);
+        L.armN = o.armN.map((q, i) => V(q, i ? zs + 2 : zs)); L.armF = o.armF.map((q, i) => V(q, i ? -zs - 2 : -zs));
+        L.legN = o.legN.map(q => V(q, zh)); L.legF = o.legF.map(q => V(q, -zh));
+        L.footN = o.footN.map(q => V(q, zh)); L.footF = o.footF.map(q => V(q, -zh));
+        L.zN = zh; L.zF = -zh;
+        L.lat = new T.Vector3(0, 0, 1);
+        const fd = FIG.dir(o.tA + 90); L.fd = new T.Vector3(fd[0], -fd[1], 0);
+      } else {
+        L.sN = V(o.sN, 2); L.sF = V(o.sF, -2); L.hN = V(o.hN, 2); L.hF = V(o.hF, -2);
+        L.armN = o.armN.map(q => V(q, 3)); L.armF = o.armF.map(q => V(q, -3));
+        L.legN = o.legN.map(q => V(q, 3)); L.legF = o.legF.map(q => V(q, -3));
+        L.footN = o.footN.map((q, i) => V(q, 3 + i * 9)); L.footF = o.footF.map((q, i) => V(q, -3 + i * 9));
+        L.zN = 3; L.zF = -3;
+        const n = FIG.dir(o.tA + 90); L.lat = new T.Vector3(n[0], -n[1], 0);
+        L.fd = new T.Vector3(0, 0, 1);
+      }
+      L.hip = V(o.hip, 0); L.S = V(o.S, 0); L.head = V(o.head, 0);
+      L.up = new T.Vector3().subVectors(L.S, L.hip).normalize();
+      if (this.ex === EX.band_pull_apart) {
+        const ph = lerp(10, 86, t) * Math.PI / 180, k = Math.sin(ph), c = Math.cos(ph);
+        const mk = (s, sg) => { const e = s.clone().add(new T.Vector3(sg * 28 * k * SC, -5 * SC, 27 * c * SC)); const h = s.clone().add(new T.Vector3(sg * 54 * k * SC, -6 * SC, 54 * c * SC)); return [s.clone(), e, h]; };
+        L.armN = mk(L.sN, 1); L.armF = mk(L.sF, -1);
+        L.band = [L.armF[2], L.armN[2]];
+      }
+      if (this.ex === EX.row_band) {
+        const sole2 = side2 => { const an = o['leg' + side2][2]; return FIG.add(FIG.add(an, FIG.dir(-80, 6)), FIG.dir(10, 4.5)); };
+        L.band = [V(sole2('N'), L.zN), L.armN[2]]; L.band2 = [V(sole2('F'), L.zF), L.armF[2]];
+      }
+      // semelles : décalées vers le dessous du pied
+      const soleOf = (ft, z) => { const a = ft[0], b = ft[1]; const n = FIG.dir(FIG.ang(a, b) + 90); return [V(FIG.add(a, FIG.mul(n, 3)), z), V(FIG.add(b, FIG.mul(n, 3)), z)]; };
+      const fz = (arr) => arr[0].z / SC;
+      L.soleN = soleOf(o.footN, fz(L.footN)); L.soleF = soleOf(o.footF, fz(L.footF));
+      if (this.front) { L.soleN[1].z += 9 * SC; L.soleF[1].z += 9 * SC; }
+      return L;
+    }
+    build() {
+      const T = this.T, L0 = this.lift(0, 1), M = this.mats;
+      const add = (mesh) => { mesh.castShadow = true; this.scene.add(mesh); return mesh; };
+      const seg = (mat, r, len0, get) => { const g = new T.CapsuleGeometry(r * SC, Math.max(len0, 0.002), 6, 14); this.geos.push(g); const m = add(new T.Mesh(g, mat)); this.parts.push({ type: 'seg', m, len0, get }); };
+      const ball = (mat, r, get, sy = 1) => { const g = new T.SphereGeometry(r * SC, 22, 16); this.geos.push(g); const m = add(new T.Mesh(g, mat)); m.scale.y = sy; this.parts.push({ type: 'ball', m, get }); };
+      const ell = (mat, rx, ry, rz, get) => { const g = new T.SphereGeometry(SC, 28, 20); this.geos.push(g); const m = add(new T.Mesh(g, mat)); m.matrixAutoUpdate = false; this.parts.push({ type: 'ell', m, rx, ry, rz, get }); };
+      const lp = (a, b, t) => a.clone().lerp(b, t);
+      const len = (a, b) => a.distanceTo(b);
+      for (const sd of ['F', 'N']) {
+        const A = 'arm' + sd, G = 'leg' + sd, F = 'foot' + sd, SO = 'sole' + sd, SH = 's' + sd;
+        // jambe
+        seg(M.top, 7.7, len(L0[G][0], lp(L0[G][0], L0[G][1], .52)), L => [L[G][0], lp(L[G][0], L[G][1], .52)]);
+        seg(M.white, 7.1, len(L0[G][0], L0[G][1]) * .13, L => [lp(L[G][0], L[G][1], .5), lp(L[G][0], L[G][1], .63)]);
+        seg(M.skin, 6.3, len(L0[G][0], L0[G][1]) * .37, L => [lp(L[G][0], L[G][1], .63), L[G][1]]);
+        ball(M.skin, 5.7, L => L[G][1]);
+        seg(M.skin, 5.3, len(L0[G][1], L0[G][2]) * .55, L => [L[G][1], lp(L[G][1], L[G][2], .55)]);
+        seg(M.white, 5.1, len(L0[G][1], L0[G][2]) * .48, L => [lp(L[G][1], L[G][2], .52), L[G][2]]);
+        seg(M.white, 4.5, len(L0[F][0], L0[F][1]), L => [L[F][0], L[F][1]]);
+        seg(M.sole, 2.3, len(L0[SO][0], L0[SO][1]), L => [L[SO][0], L[SO][1]]);
+        // bras
+        ball(M.skin, 6.3, L => L[SH]);
+        seg(M.skin, 5.2, len(L0[A][0], L0[A][1]), L => [L[A][0], L[A][1]]);
+        seg(M.skin, 4.3, len(L0[A][1], L0[A][2]), L => [L[A][1], L[A][2]]);
+        ball(M.skin, 4.7, L => L[A][2]);
+      }
+      // tronc
+      ell(M.top, 13.2, 9.5, 10, L => ({ c: L.hip, up: L.up, lat: L.lat, fd: L.fd }));
+      ell(M.top, 14.6, 25, 10.2, L => ({ c: lp(L.hip, L.S, .45), up: L.up, lat: L.lat, fd: L.fd }));
+      ell(M.top, 16.2, 15, 11.4, L => ({ c: lp(L.hip, L.S, .78).add(L.fd.clone().multiplyScalar(1.2 * SC)), up: L.up, lat: L.lat, fd: L.fd }));
+      seg(M.skin, 4.4, len(L0.S, lp(L0.S, L0.head, .7)), L => [L.S, lp(L.S, L.head, .7)]);
+      ball(M.skin, 10, L => L.head.clone().add(L.fd.clone().multiplyScalar(0.8 * SC)), 1.08);
+      ball(M.hair, 10.5, L => L.head.clone().add(L.fd.clone().multiplyScalar(-2.4 * SC)).add(L.up.clone().multiplyScalar(2.4 * SC)), 1.02);
+      if (L0.band) seg(M.band, 1.5, len(L0.band[0], L0.band[1]), L => L.band);
+      if (L0.band2) seg(M.band, 1.5, len(L0.band2[0], L0.band2[1]), L => L.band2);
+    }
+    set(t, side) {
+      const L = this.lift(t, side), T = this.T, Y = this.Y;
+      for (const p of this.parts) {
+        const g = p.get(L);
+        if (p.type === 'seg') {
+          const [a, b] = g, d = this.tmp.subVectors(b, a), l = d.length();
+          p.m.position.addVectors(a, b).multiplyScalar(0.5);
+          if (l > 1e-6) p.m.quaternion.setFromUnitVectors(Y, d.normalize());
+          p.m.scale.set(1, Math.max(0.05, l / Math.max(p.len0, 0.002)), 1);
+        } else if (p.type === 'ball') p.m.position.copy(g);
+        else {
+          const up = g.up.clone().normalize();
+          const lat = g.lat.clone().addScaledVector(up, -g.lat.dot(up)).normalize();
+          const fd = new T.Vector3().crossVectors(lat, up).normalize();
+          if (fd.dot(g.fd) < 0) fd.negate();
+          this.m4.makeBasis(lat.multiplyScalar(p.rx), up.multiplyScalar(p.ry), fd.multiplyScalar(p.rz)).setPosition(g.c);
+          p.m.matrix.copy(this.m4);
+        }
+      }
+      this.render();
+    }
+    fit() {
+      let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      for (const t of [0, .25, .5, .75, 1]) for (const sd of [1, 2]) {
+        const o = FIG.solve(this.ex.pose(t, sd));
+        const pts = [...o.armN, ...o.armF, ...o.legN, ...o.legF, ...o.footN, ...o.footF, o.hip, o.S];
+        for (const q of pts) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+        y0 = Math.min(y0, o.head[1] - 12); x0 = Math.min(x0, o.head[0] - 12); x1 = Math.max(x1, o.head[0] + 12);
+      }
+      y1 = Math.max(y1, 172);
+      this.box = { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, w: x1 - x0 + 40, h: y1 - y0 + 20 };
+      this.target = new this.T.Vector3((this.box.cx - 160) * SC, (172 - this.box.cy) * SC, 0);
+    }
+    resize() {
+      const w = this.host.clientWidth, h = Math.max(120, this.host.clientHeight - 50);
+      if (!w) return;
+      this.renderer.setSize(w, h, false);
+      this.renderer.domElement.style.width = w + 'px'; this.renderer.domElement.style.height = h + 'px';
+      this.cam.aspect = w / h; this.cam.updateProjectionMatrix();
+      const tan = Math.tan(this.cam.fov * Math.PI / 360) * 2;
+      this.dist = Math.max(this.box.h * SC * 1.12 / tan, this.box.w * SC * 1.0 / (tan * this.cam.aspect));
+      this.render();
+    }
+    render() {
+      if (!this.renderer) return;
+      const d = this.dist || 4, c = this.cam, tg = this.target;
+      c.position.set(tg.x + d * Math.sin(this.az) * Math.cos(this.el), tg.y + d * Math.sin(this.el), tg.z + d * Math.cos(this.az) * Math.cos(this.el));
+      c.lookAt(tg);
+      this.renderer.render(this.scene, c);
+    }
+    bindDrag() {
+      const el = this.renderer.domElement;
+      let px = null, py = null;
+      this.onDown = e => { px = e.clientX; py = e.clientY; el.setPointerCapture && el.setPointerCapture(e.pointerId); el.classList.add('drag'); };
+      this.onMove = e => { if (px == null) return; this.az -= (e.clientX - px) * 0.009; if (e.pointerType === 'mouse') this.el = Math.max(-0.05, Math.min(1.1, this.el + (e.clientY - py) * 0.006)); px = e.clientX; py = e.clientY; this.render(); };
+      this.onUp = () => { px = null; el.classList.remove('drag'); };
+      el.addEventListener('pointerdown', this.onDown); el.addEventListener('pointermove', this.onMove);
+      el.addEventListener('pointerup', this.onUp); el.addEventListener('pointercancel', this.onUp);
+      el.addEventListener('dblclick', () => { this.az = this.az0; this.el = 0.2; this.render(); });
+    }
+    dispose() {
+      if (!this.renderer) return;
+      try { this.ro.disconnect(); } catch (e) { }
+      this.geos.forEach(g => g.dispose()); Object.values(this.mats).forEach(m => m.dispose());
+      this.renderer.dispose(); try { this.renderer.forceContextLoss(); } catch (e) { }
+      this.renderer.domElement.remove(); this.renderer = null;
+    }
+  }
+  return { ok, load, View };
+})();
+
 /* ===== Interface : composants, écran Aujourd’hui, Programme, feuilles ===== */
 const sv = (d, extra = '') => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' + extra + '>' + d + '</svg>';
 const I = {
@@ -1464,7 +1688,8 @@ function medFoot() {
 /* ---------- illustrations animées ---------- */
 function stageHTML(id, key) {
   return '<div class="stage" data-stage="' + id + '" data-key="' + (key || id) + '">' + FIG.svg(EX[id], 0, 1) +
-    '<div class="stage-lbl"><b data-lbl>Départ</b>' + (EX[id].inset ? '' : '<span>' + EX[id].view.replace(' · un côté puis l’autre', '') + '</span>') + '</div>' +
+    '<div class="stage-lbl"><b data-lbl>Départ</b>' + (M3.ok ? '<button class="s3d" data-act="stage3d" aria-pressed="false" aria-label="Basculer en 3D">3D</button>' : '') + '</div>' +
+    '<div class="s3d-hint">Glisse pour tourner</div>' +
     '<div class="stage-ctl"><button class="btn icon sm" data-act="stagePlay" aria-label="Lecture ou pause">' + I.play + '</button>' +
     '<input type="range" min="0" max="1000" value="0" aria-label="Position dans le mouvement"></div></div>';
 }
@@ -1479,19 +1704,32 @@ class Stage {
     this.lbl = el.querySelector('[data-lbl]'); this.btn = el.querySelector('[data-act=stagePlay]');
     this.ms = 0; this.playing = false; this.total = FIG.sample(this.ex.seq, 0).total;
     this.range.addEventListener('input', () => { this.stop(); this.ms = this.range.value / 1000 * this.total; this.draw(); });
+    if (M3.ok && S.profile.anim3d !== false) this.enable3d();
     this.draw();
     if (!RM()) this.play();
   }
+  enable3d() {
+    this.want3d = true; this.syncBtn(); this.el.classList.add('loading3d');
+    M3.load().then(() => {
+      this.el.classList.remove('loading3d');
+      if (!this.want3d || this.v3 || !this.el.isConnected) return;
+      try { this.v3 = new M3.View(this.el, this.ex); this.el.classList.add('is3d'); } catch (e) { this.want3d = false; }
+      this.syncBtn(); this.draw();
+    }, () => { this.want3d = false; this.el.classList.remove('loading3d'); this.syncBtn(); if (!M3.warned) { M3.warned = true; toast('3D indisponible ici : animation 2D.'); } });
+  }
+  disable3d() { this.want3d = false; if (this.v3) { this.v3.dispose(); this.v3 = null; } this.el.classList.remove('is3d', 'loading3d'); this.syncBtn(); this.draw(); }
+  syncBtn() { const b = this.el.querySelector('.s3d'); if (b) { b.classList.toggle('on', !!this.want3d); b.setAttribute('aria-pressed', String(!!this.want3d)); } }
   play() {
     if (this.playing) return; this.playing = true; this.btn.innerHTML = I.pause; this.last = performance.now();
-    const f = now => { if (!this.playing) return; if (!this.el.isConnected) { this.playing = false; return; } this.ms += Math.min(now - this.last, 100); this.last = now; this.draw(); this.raf = requestAnimationFrame(f); };
+    const f = now => { if (!this.playing) return; if (!this.el.isConnected) { this.kill(); return; } this.ms += Math.min(now - this.last, 100); this.last = now; this.draw(); this.raf = requestAnimationFrame(f); };
     this.raf = requestAnimationFrame(f);
   }
   stop() { this.playing = false; cancelAnimationFrame(this.raf); if (this.btn) this.btn.innerHTML = I.play; }
+  kill() { this.stop(); if (this.v3) { this.v3.dispose(); this.v3 = null; } }
   toggle() { this.playing ? this.stop() : this.play(); }
   draw() {
     const s = FIG.sample(this.ex.seq, this.ms);
-    FIG.update(this.svg, this.ex, s.t, s.side);
+    if (this.v3) this.v3.set(s.t, s.side); else FIG.update(this.svg, this.ex, s.t, s.side);
     this.range.value = Math.round(((this.ms % this.total) / this.total) * 1000);
     if (this.lbl.textContent !== s.label) this.lbl.textContent = s.label;
   }
@@ -1503,7 +1741,7 @@ function restoreStages(root) {
     const old = stageCache.get(el.dataset.key);
     if (old && old !== el && old.dataset.stage === el.dataset.stage) { el.replaceWith(old); if (old._st && !old._st.playing && !RM() && old._st.wasPlaying !== false) old._st.play(); }
   });
-  stageCache.forEach((el, k) => { if (!el.isConnected) { el._st && el._st.stop(); stageCache.delete(k); } });
+  stageCache.forEach((el, k) => { if (!el.isConnected) { el._st && el._st.kill(); stageCache.delete(k); } });
   mountStages(root);
 }
 document.addEventListener('visibilitychange', () => {
@@ -1748,7 +1986,7 @@ function openSheet(html, fn) {
   const swap = !el.hidden && !el.classList.contains('out');
   el.classList.remove('out'); el.classList.toggle('swap', swap);
   const prevScroll = swap && fn && ui.sheetFn === fn ? (el.querySelector('.sh-panel') || {}).scrollTop : 0;
-  el.querySelectorAll('.stage').forEach(s => s._st && s._st.stop());
+  el.querySelectorAll('.stage').forEach(s => s._st && s._st.kill());
   el.innerHTML = '<div class="sh-back" data-act="closeSheet"></div><div class="sh-panel" role="dialog" aria-modal="true"><div class="sh-grab"></div>' + html + '</div>';
   el.hidden = false; document.body.classList.add('noscroll');
   ui.sheetFn = fn || null;
@@ -1760,7 +1998,7 @@ function closeSheet(instant) {
   const el = document.getElementById('sheet');
   if (el.hidden) return;
   ui.sheetFn = null;
-  const done = () => { el.querySelectorAll('.stage').forEach(s => s._st && s._st.stop()); el.hidden = true; el.innerHTML = ''; el.classList.remove('out', 'swap'); if (!ui.sess) document.body.classList.remove('noscroll'); };
+  const done = () => { el.querySelectorAll('.stage').forEach(s => s._st && s._st.kill()); el.hidden = true; el.innerHTML = ''; el.classList.remove('out', 'swap'); if (!ui.sess) document.body.classList.remove('noscroll'); };
   if (instant || RM()) { done(); return; }
   el.classList.add('out'); clearTimeout(sheetTimer); sheetTimer = setTimeout(done, 240);
 }
@@ -1991,7 +2229,7 @@ const PROF = {
   recipe: () => sheetHead('Recette du shaker') + '<label class="field"><span>Ingrédients et quantités</span><textarea class="input" data-chg="path" data-path="profile.recipe.text" id="recipeText" maxlength="2000" placeholder="Ta recette réelle">' + esc(S.profile.recipe.text) + '</textarea></label><div class="grid2">' + fld('Calories (kcal)', 'number', 'profile.recipe.kcal', S.profile.recipe.kcal ?? '') + fld('Protéines (g)', 'number', 'profile.recipe.protein', S.profile.recipe.protein ?? '') + '</div><p class="note">Renseigne les valeurs de tes emballages : rien n’est inventé.</p>',
   bands: () => sheetHead('Mes bandes') + (S.profile.bands.length ? '<div class="list">' + S.profile.bands.map(b => '<div class="li"><div><div class="t">' + esc(b.name) + '</div><div class="s">' + (b.note ? esc(b.note) : 'Résistance non indiquée') + '</div></div><button class="btn sm ghost" data-act="delBand" data-id="' + b.id + '">Retirer</button></div>').join('') + '</div>' : '<p class="note">Note tes bandes pour les choisir en un geste pendant la séance. Aucune charge en kilos.</p>') +
     '<div class="grid2"><input class="input" id="bandName" maxlength="40" placeholder="Nom ou couleur" aria-label="Nom de la bande"><input class="input" id="bandNote" maxlength="120" placeholder="Note (facultatif)" aria-label="Note"></div><button class="btn primary block" data-act="addBand">Ajouter</button>',
-  session: () => sheetHead('Affichage et son') + '<div class="field"><span>Thème</span><div class="seg flat">' + [['peche', 'Pêche'], ['menthe', 'Menthe'], ['dark', 'Sombre']].map(([k, l]) => '<button class="' + (S.profile.theme === k ? 'on' : '') + '" data-act="setTheme" data-v="' + k + '">' + l + '</button>').join('') + '</div></div><label class="toggle"><span>Son en fin de repos<br><span class="note">Application ouverte à l’écran</span></span><input type="checkbox" data-chg="bool" data-path="profile.sound"' + (S.profile.sound ? ' checked' : '') + '></label><label class="toggle"><span>Vibration<br><span class="note">Fin de repos et validations</span></span><input type="checkbox" data-chg="bool" data-path="profile.vibrate"' + (S.profile.vibrate ? ' checked' : '') + '></label><p class="note">Le minuteur garde son heure de fin même en arrière-plan. Aucune alarme n’est garantie écran éteint.</p>',
+  session: () => sheetHead('Affichage et son') + '<div class="field"><span>Thème</span><div class="seg flat">' + [['peche', 'Pêche'], ['menthe', 'Menthe'], ['dark', 'Sombre']].map(([k, l]) => '<button class="' + (S.profile.theme === k ? 'on' : '') + '" data-act="setTheme" data-v="' + k + '">' + l + '</button>').join('') + '</div></div>' + (M3.ok ? '<label class="toggle"><span>Animations en 3D<br><span class="note">Mannequin à faire tourner au doigt</span></span><input type="checkbox" data-chg="bool" data-path="profile.anim3d"' + (S.profile.anim3d !== false ? ' checked' : '') + '></label>' : '') + '<label class="toggle"><span>Son en fin de repos<br><span class="note">Application ouverte à l’écran</span></span><input type="checkbox" data-chg="bool" data-path="profile.sound"' + (S.profile.sound ? ' checked' : '') + '></label><label class="toggle"><span>Vibration<br><span class="note">Fin de repos et validations</span></span><input type="checkbox" data-chg="bool" data-path="profile.vibrate"' + (S.profile.vibrate ? ' checked' : '') + '></label><p class="note">Le minuteur garde son heure de fin même en arrière-plan. Aucune alarme n’est garantie écran éteint.</p>',
   data: () => dataSheet(),
   install: () => installSheet(),
   about: () => sheetHead('À propos') + '<div class="cues"><p>Application personnelle, sans compte ni publicité. Tes saisies restent dans ce navigateur, sur ce téléphone, et ne sont envoyées nulle part.</p><p class="note">' + FIG_LIMIT + '</p><p class="note">Ce programme ne remplace pas un avis médical.</p></div>'
@@ -2036,7 +2274,7 @@ function renderSession() {
   const el = document.getElementById('session');
   const s = curSess();
   if (!ui.sess || !s) {
-    el.querySelectorAll('.stage').forEach(x => x._st && x._st.stop());
+    el.querySelectorAll('.stage').forEach(x => x._st && x._st.kill());
     el.hidden = true; el.innerHTML = ''; el.classList.remove('out'); releaseWake(); renderRest(); lastPos = null;
     document.body.classList.remove('insession');
     if (document.getElementById('sheet').hidden) document.body.classList.remove('noscroll');
@@ -2495,6 +2733,7 @@ const ACT = {
     if (other && other.status === 'active' && other.date !== el.dataset.date) { toast('Termine d’abord la séance en cours.'); return; }
     S.active = el.dataset.date; const s = curSess(); s.pos = s.ex.length; ui.sess = true; closeSheet(true); save(); renderSession();
   },
+  stage3d(el) { const st = el.closest('.stage')._st; if (!st) return; S.profile.anim3d = !st.want3d; save(); st.want3d ? st.disable3d() : st.enable3d(); },
   stagePlay(el) { const st = el.closest('.stage'); if (st && st._st) { st._st.toggle(); st._st.wasPlaying = st._st.playing; } },
   runSheet(el) { runSheet(el.dataset.date); },
   rf(el) { captureRunForm(); const f = ui.runForm.f; const k = el.dataset.k; let v = el.dataset.v; if (k === 'effort') v = +v; f[k] = f[k] === v && k === 'effort' ? null : v; if (k === 'kind' && v === 'badminton' && !S.runs[ui.runForm.date]) f.minutes = 60; renderRunSheet(); },
