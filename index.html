@@ -605,7 +605,7 @@ body.insession #toast { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); 
   @page { size: A4; margin: 12mm; }
   html, body { background: #fff !important; }
   body::before { display: none; }
-  #app, #tabs, #session, #sheet, #toast, #restbar, #celebrate, .pr-bar { display: none !important; }
+  #app, #tabs, #session, #sheet, #toast, #restbar, #celebrate, #unlock, .pr-bar { display: none !important; }
   #print { min-height: 0; }
   .pr { max-width: none; padding: 0; font-size: 10.5pt; }
   .pr .exs, .pr .cols { grid-template-columns: 1fr 1fr; }
@@ -790,6 +790,79 @@ button.coach { appearance: none; border: 0; text-align: left; color: inherit; wi
 .coach-ring b, .coach-ring span { position: relative; line-height: 1; }
 .coach-ring b { font: 800 18px/1 var(--f-display); } .coach-ring span { font-size: 9.5px; color: var(--muted); }
 
+/* ---------- sauvegarde cloud ---------- */
+.steps { margin: 0; padding-left: 20px; display: grid; gap: 14px; font-size: 14px; }
+.steps li { display: flex; flex-direction: column; gap: 8px; } .steps li::marker { font-weight: 800; color: var(--acc-txt); }
+.cloud-st { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: center; padding: 12px; border-radius: 16px; background: var(--acc-soft); box-shadow: inset 0 0 0 1px var(--acc-line); }
+.cloud-st b { display: block; } .cloud-st.bad { background: var(--bad-soft); box-shadow: inset 0 0 0 1px var(--bad); }
+
+/* ---------- courbe de force ---------- */
+.li.fo { grid-template-columns: 1fr 76px auto; gap: 10px; }
+.spark { width: 76px; height: 26px; overflow: visible; }
+.spark path { fill: none; stroke: var(--chart); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px var(--acc-glow)); }
+.spark circle { fill: var(--chart); }
+.chart .lvl { stroke: var(--run); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.chart text.lvlt { fill: var(--run-txt); font-weight: 700; }
+.chart .pt.red { fill: var(--sheet); stroke-dasharray: 2 2; }
+.vs { display: grid; grid-template-columns: 1fr 24px 1fr; gap: 8px; align-items: center; }
+.vs > div { border-radius: 14px; background: var(--tint); padding: 10px; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.vs > div:last-child { background: var(--acc-soft); box-shadow: inset 0 0 0 1px var(--acc-line); }
+.vs b { font: 800 26px/1 var(--f-display); } .vs b small { font: 600 11px var(--f-body); color: var(--muted); margin-left: 3px; }
+.vs .note { font-size: 11.5px; line-height: 1.25; }
+.vs-arrow svg { width: 20px; height: 20px; color: var(--acc-txt); }
+
+/* ---------- série et badges ---------- */
+.streak { appearance: none; border: 0; display: inline-flex; align-items: center; gap: 4px; height: 40px; padding: 0 12px 0 9px; border-radius: 999px; background: var(--tint2); color: var(--muted); font: 800 17px/1 var(--f-display); transition: transform .4s var(--spring); }
+.streak:active { transform: scale(.9); }
+.streak svg { width: 22px; height: 22px; }
+.streak.on { color: #FF9A3D; background: rgba(255, 154, 61, .14); box-shadow: inset 0 0 0 1px rgba(255, 154, 61, .35); }
+.streak.on svg { fill: rgba(255, 154, 61, .35); filter: drop-shadow(0 0 6px rgba(255, 140, 50, .7)); animation: flick 1.8s ease-in-out infinite; transform-origin: 50% 90%; }
+.streak.on.pending svg { animation-duration: .9s; }
+@keyframes flick { 0%, 100% { transform: scale(1) rotate(0); } 30% { transform: scale(1.08, .95) rotate(-3deg); } 60% { transform: scale(.96, 1.06) rotate(2deg); } }
+.streak-hero { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: center; padding: 14px; border-radius: 20px; background: var(--tint); }
+.streak-hero.on { background: linear-gradient(135deg, rgba(255, 154, 61, .18), rgba(255, 79, 139, .12)); box-shadow: inset 0 0 0 1px rgba(255, 154, 61, .3); }
+.sh-flame svg { width: 76px; height: 76px; color: var(--dim); }
+.streak-hero.on .sh-flame svg { color: #FF9A3D; fill: rgba(255, 154, 61, .3); filter: drop-shadow(0 0 14px rgba(255, 140, 50, .7)); animation: flick 1.8s ease-in-out infinite; transform-origin: 50% 90%; }
+.streak-hero b { display: block; font: 800 44px/1 var(--f-display); letter-spacing: -.02em; }
+.streak-hero span { display: block; font-weight: 600; }
+.streak-hero .note { font-weight: 400; margin-top: 4px; }
+.wkdots { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.wkdots i { aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font: 700 10px/1 var(--f-body); font-style: normal; color: var(--dim); background: var(--tint); box-shadow: inset 0 0 0 1px var(--line2); }
+.wkdots i.cur { box-shadow: inset 0 0 0 2px var(--acc-line); color: var(--acc-txt); }
+.wkdots i.done { background: var(--acc-grad); color: #fff; box-shadow: 0 6px 14px -6px var(--acc-glow); }
+.wkdots svg { width: 14px; height: 14px; }
+.badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.bdg { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 3px; padding: 10px 4px 8px; border-radius: 16px; background: var(--tint); min-width: 0; }
+.bdg .medal { width: 62px; height: 62px; margin-bottom: 2px; }
+.bdg.got .medal { filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .3)); }
+.bdg b { font: 700 12.5px/1.15 var(--f-body); }
+.bdg span { font-size: 10.5px; color: var(--muted); line-height: 1.25; }
+.bdg:not(.got) b { color: var(--muted); }
+.bp { width: 70%; height: 4px; border-radius: 4px; background: var(--tint2); overflow: hidden; margin-top: 4px; }
+.bp i { display: block; height: 100%; border-radius: 4px; background: var(--acc-grad); }
+.bdg .bpn { font-size: 10px; }
+.medal .mi { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.medal .mi.lk { stroke: rgba(255, 255, 255, .35); }
+#unlock { position: fixed; inset: 0; z-index: 96; display: grid; place-items: center; padding: 24px; background: radial-gradient(55% 40% at 50% 38%, rgba(255, 154, 61, .22), transparent 70%), var(--veil); animation: fadeIn .3s; }
+#unlock.out { animation: fadeOut .28s forwards; }
+.ul-in { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; max-width: 340px; width: 100%; }
+.ul-rays { position: absolute; top: -30px; left: 50%; width: 320px; height: 320px; margin-left: -160px; border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(rgba(255, 190, 90, .22) 0 8deg, transparent 8deg 24deg); -webkit-mask: radial-gradient(closest-side, #000 30%, transparent 100%); mask: radial-gradient(closest-side, #000 30%, transparent 100%); animation: spinSlow 14s linear infinite, fadeIn .6s .2s both; }
+.ul-medals { position: relative; display: flex; justify-content: center; gap: 6px; height: 170px; align-items: center; }
+.ul-m { animation: medalIn .8s var(--spring) both; animation-delay: calc(.15s + var(--k) * .12s); }
+.ul-m .medal { width: 150px; height: 150px; filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .45)); animation: medalFloat 3s ease-in-out 1s infinite; }
+.ul-medals.many { flex-wrap: wrap; height: auto; min-height: 170px; max-width: 300px; gap: 8px; align-content: center; }
+.ul-medals.many .ul-m .medal { width: 64px; height: 64px; }
+@keyframes medalIn { 0% { opacity: 0; transform: scale(.2) rotate(-30deg); } 60% { opacity: 1; transform: scale(1.15) rotate(6deg); } 100% { transform: none; } }
+@keyframes medalFloat { 50% { transform: translateY(-6px) rotate(2deg); } }
+.ul-in .burst { top: 85px; }
+.ul-in .burst i { animation-delay: .55s; }
+.ul-in .eyebrow { color: #FFB45E; animation: rise .5s var(--ease) .5s both; }
+.ul-in h2 { font: 800 34px/1.05 var(--f-display); letter-spacing: -.02em; animation: rise .5s var(--ease) .6s both; }
+:root[data-ui="nuit"] .ul-in h2 { text-transform: uppercase; letter-spacing: .02em; }
+.ul-in p { animation: rise .5s var(--ease) .7s both; }
+.ul-in .btn { min-width: 220px; margin-top: 8px; animation: rise .5s var(--ease) .8s both; }
+
 /* ---------- vie des écrans ---------- */
 .scr-ghost { position: fixed; z-index: 0; pointer-events: none; animation: ghostOut .3s var(--ease) forwards !important; }
 .scr-ghost * { animation: none !important; transition: none !important; }
@@ -849,6 +922,7 @@ button.coach { appearance: none; border: 0; text-align: left; color: inherit; wi
 <div id="sheet" hidden></div>
 <div id="toast" role="status" hidden></div>
 <div id="celebrate" role="dialog" aria-label="Séance terminée" hidden></div>
+<div id="unlock" role="dialog" aria-label="Badge débloqué" hidden></div>
 <noscript><p style="padding:24px;color:#EDF4F1;background:#090D0E">Cette application a besoin de JavaScript.</p></noscript>
 <script>
 /* ===== Silhouette articulée : cinématique simple (2 segments par membre) ===== */
@@ -1383,7 +1457,7 @@ function defaults() {
       pushVariant: 'pushup_knee', rest: {}, sound: true, vibrate: true, nutritionNotes: [], theme: 'nuit', themeV: 2, anim3d: true
     },
     plan: { startDate: null, seq: [1, 2, 3, 4, 5, 6, 7, 8], runs: JSON.parse(JSON.stringify(RUN_DEFAULT)) },
-    sessions: {}, runs: {}, weights: [], shakes: {}, mobility: {}, checkins: {}, levels: {},
+    sessions: {}, runs: {}, weights: [], shakes: {}, mobility: {}, checkins: {}, badges: {}, levels: {},
     sugg: { dismissed: {} }, kcalSugg: { dismissedWeek: null }, runClearedAt: null,
     active: null, timer: null, stopwatch: null
   };
@@ -1421,6 +1495,7 @@ function normalize(o) {
   if (Array.isArray(o.weights)) out.weights = o.weights.filter(w => isObj(w) && isDate(w.date) && typeof w.kg === 'number' && w.kg > 20 && w.kg < 300).map(w => ({ date: w.date, kg: w.kg }));
   if (isObj(o.levels)) for (const k in o.levels) if (EX[k] && isObj(o.levels[k]) && Number.isInteger(o.levels[k].level)) out.levels[k] = { level: o.levels[k].level, hist: Array.isArray(o.levels[k].hist) ? o.levels[k].hist : [] };
   if (isObj(o.sugg) && isObj(o.sugg.dismissed)) out.sugg.dismissed = o.sugg.dismissed;
+  if (isObj(o.badges)) for (const k in o.badges) if (isDate(o.badges[k])) out.badges[k] = o.badges[k];
   if (isObj(o.kcalSugg)) out.kcalSugg.dismissedWeek = isDate(o.kcalSugg.dismissedWeek) ? o.kcalSugg.dismissedWeek : null;
   if (isDate(o.runClearedAt)) out.runClearedAt = o.runClearedAt;
   if (typeof o.active === 'string' && out.sessions[o.active]) out.active = o.active;
@@ -1441,7 +1516,154 @@ let S = load();
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); storageOK = true; }
   catch (e) { storageOK = false; }
+  cloudSchedule();
 }
+/* ---- sauvegarde cloud ----
+   Un Gist GitHub secret sur TON compte. Le contenu est chiffré sur le téléphone (AES-256, clé tirée de ton code secret) :
+   GitHub ne voit qu’un bloc illisible. Le jeton et le code restent sur ce téléphone, hors des sauvegardes. */
+const CKEY = 'elan.cloud.v1', GIST_FILE = 'elan-sauvegarde.json', GIST_DESC = 'Élan · sauvegarde chiffrée';
+let CLOUD = (() => { try { return JSON.parse(localStorage.getItem(CKEY) || 'null'); } catch (e) { return null; } })();
+function cloudStore() { try { CLOUD ? localStorage.setItem(CKEY, JSON.stringify(CLOUD)) : localStorage.removeItem(CKEY); } catch (e) { } }
+function b64(buf) { const a = new Uint8Array(buf); let s = ''; for (let i = 0; i < a.length; i += 8192) s += String.fromCharCode.apply(null, a.subarray(i, i + 8192)); return btoa(s); }
+function unb64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+async function deriveKey(pass, salt) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function encryptText(txt, pass) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await deriveKey(pass, salt), new TextEncoder().encode(txt));
+  return JSON.stringify({ app: 'elan-cloud', v: 1, at: new Date().toISOString(), salt: b64(salt), iv: b64(iv), ct: b64(ct) });
+}
+async function decryptText(json, pass) {
+  let o; try { o = JSON.parse(json); } catch (e) { throw new Error('format'); }
+  if (!o || o.app !== 'elan-cloud') throw new Error('format');
+  try { const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(o.iv) }, await deriveKey(pass, unb64(o.salt)), unb64(o.ct)); return { text: new TextDecoder().decode(pt), at: o.at }; }
+  catch (e) { throw new Error('pass'); }
+}
+async function gh(path, token, opts = {}) {
+  let r;
+  try { r = await fetch('https://api.github.com' + path, { ...opts, headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token, 'X-GitHub-Api-Version': '2022-11-28', ...(opts.body ? { 'Content-Type': 'application/json' } : {}) } }); }
+  catch (e) { throw new Error('net'); }
+  if (r.status === 401) throw new Error('token');
+  if (r.status === 403 || r.status === 404) throw new Error('scope');
+  if (!r.ok) throw new Error('http');
+  return r.json();
+}
+async function findGist(token) {
+  for (let page = 1; page <= 5; page++) {
+    const list = await gh('/gists?per_page=100&page=' + page, token);
+    const g = list.find(x => x.files && x.files[GIST_FILE]);
+    if (g) return g;
+    if (list.length < 100) break;
+  }
+  return null;
+}
+async function readGist(id, token) {
+  const g = await gh('/gists/' + id, token), f = g.files && g.files[GIST_FILE];
+  if (!f) throw new Error('missing');
+  if (f.truncated) { const r = await fetch(f.raw_url); return r.text(); }
+  return f.content;
+}
+const CLOUD_ERR = { token: 'Jeton refusé par GitHub (expiré ou mal copié).', scope: 'Le jeton n’a pas le droit « gist ».', net: 'Pas de connexion pour l’instant.', http: 'GitHub ne répond pas correctement, nouvel essai plus tard.', pass: 'Code secret incorrect.', format: 'Ce Gist ne contient pas une sauvegarde Élan.', missing: 'Sauvegarde introuvable dans le Gist.' };
+let cloudTimer = null, cloudBusy = false, cloudDirty = false;
+function cloudSchedule(delay = 15000) {
+  if (!CLOUD || !CLOUD.on) return;
+  cloudDirty = true;
+  if (!cloudTimer) cloudTimer = setTimeout(cloudPush, delay);
+}
+async function cloudPush(force) {
+  clearTimeout(cloudTimer); cloudTimer = null;
+  if (!CLOUD || !CLOUD.on || cloudBusy) return false;
+  if (!force && !cloudDirty) return true;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) { CLOUD.err = 'net'; cloudStore(); return false; }
+  cloudBusy = true; cloudDirty = false;
+  let ok = false;
+  try {
+    const content = await encryptText(exportPayload(), CLOUD.pass);
+    const body = JSON.stringify({ description: GIST_DESC, files: { [GIST_FILE]: { content } } });
+    if (CLOUD.gist) await gh('/gists/' + CLOUD.gist, CLOUD.token, { method: 'PATCH', body, keepalive: body.length < 60000 });
+    else { const g = await gh('/gists', CLOUD.token, { method: 'POST', body: JSON.stringify({ description: GIST_DESC, public: false, files: { [GIST_FILE]: { content } } }) }); CLOUD.gist = g.id; }
+    CLOUD.last = Date.now(); CLOUD.err = null; ok = true;
+  } catch (e) { CLOUD.err = e.message; cloudDirty = true; if (e.message === 'net' || e.message === 'http') cloudTimer = setTimeout(cloudPush, 120000); }
+  cloudBusy = false; cloudStore();
+  if (ok && cloudDirty) cloudSchedule();
+  if (ui.sheetFn === PROF.cloud) refreshSheet();
+  return ok;
+}
+function agoLabel(t) { if (!t) return 'jamais'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'à l’instant' : m < 60 ? 'il y a ' + m + ' min' : m < 1440 ? 'il y a ' + Math.round(m / 60) + ' h' : 'le ' + new Date(t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }); }
+function cloudStatus() { return !CLOUD || !CLOUD.on ? 'Désactivée' : CLOUD.err && CLOUD.err !== 'net' ? 'À vérifier' : 'Auto · ' + agoLabel(CLOUD.last); }
+function cloudSheetHTML() {
+  const c = ui.cloud || (ui.cloud = {});
+  let h = sheetHead('Sauvegarde cloud', 'Automatique et chiffrée');
+  if (CLOUD && CLOUD.on) {
+    h += '<section class="cloud-st' + (CLOUD.err && CLOUD.err !== 'net' ? ' bad' : '') + '"><span class="ic fill">' + I.save + '</span><div><b>' + (cloudBusy ? 'Envoi en cours…' : 'Dernière sauvegarde ' + agoLabel(CLOUD.last)) + '</b><span class="note">' + (CLOUD.err ? CLOUD_ERR[CLOUD.err] || 'Erreur inconnue.' : 'Chaque modification part vers ton Gist privé quelques secondes après.') + '</span></div></section>';
+    h += '<div class="btns"><button class="btn primary" data-act="cloudNow">Sauvegarder maintenant</button><button class="btn" data-act="cloudRestore">Restaurer</button></div>';
+    if (c.preview) h += cloudPreviewHTML(c.preview);
+    h += '<p class="note">Sur un nouveau téléphone : installe Élan, puis Profil → Sauvegarde cloud, avec le même jeton et le même code secret.</p>';
+    h += '<button class="btn ghost block" data-act="cloudOff">Désactiver sur ce téléphone</button>';
+    return h;
+  }
+  h += '<p class="small">Tes données partent toutes seules sur ton compte GitHub, dans un Gist secret. Elles sont <b>chiffrées sur le téléphone</b> avec ton code secret : sans lui, personne ne peut les lire, ni GitHub ni moi.</p>';
+  h += '<ol class="steps"><li><b>Crée un jeton</b> sur GitHub (droit « gist » déjà coché). Choisis une expiration longue, puis copie-le.<a class="btn sm block" href="https://github.com/settings/tokens/new?scopes=gist&description=%C3%89lan%20sauvegarde" target="_blank" rel="noopener">Ouvrir GitHub</a></li>' +
+    '<li><b>Colle le jeton</b><input class="input" type="password" id="cloudToken" autocomplete="off" placeholder="ghp_…" value="' + esc(c.token || '') + '"></li>' +
+    '<li><b>Choisis un code secret</b> (6 caractères minimum). Note-le : sans lui, la sauvegarde est illisible, même pour toi.<input class="input" type="password" id="cloudPass" autocomplete="new-password" placeholder="Code secret" value="' + esc(c.pass || '') + '"></li></ol>';
+  if (c.err) h += alertBox('bad', 'warn', esc(c.err));
+  if (c.found) {
+    h += alertBox('acc', 'save', 'Une sauvegarde Élan existe déjà sur ce compte (' + esc(new Date(c.found.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })) + ').');
+    if (c.preview) h += cloudPreviewHTML(c.preview);
+    else h += '<div class="btns"><button class="btn primary" data-act="cloudRestore">La restaurer ici</button><button class="btn" data-act="cloudOverwrite">La remplacer par ce téléphone</button></div>';
+  } else h += '<button class="btn primary xl block" data-act="cloudConnect"' + (c.busy ? ' disabled' : '') + '>' + (c.busy ? 'Connexion…' : 'Activer la sauvegarde') + '</button>';
+  return h;
+}
+function cloudPreviewHTML(v) {
+  return v.ok ? alertBox('acc', 'check', 'Sauvegarde du ' + esc(v.when) + ' : ' + v.sum + '. Elle remplacera les données de ce téléphone (une copie locale est gardée).<div class="btns" style="margin-top:8px"><button class="btn sm primary" data-act="cloudApply">Remplacer mes données</button><button class="btn sm" data-act="cloudCancel">Annuler</button></div>') : alertBox('bad', 'warn', v.errors.map(esc).join('<br>'));
+}
+function readCloudForm() { const c = ui.cloud || (ui.cloud = {}), t = document.getElementById('cloudToken'), p = document.getElementById('cloudPass'); if (t) c.token = t.value.trim(); if (p) c.pass = p.value; return c; }
+async function cloudFetchPreview(token, pass, id) {
+  const raw = await readGist(id, token), dec = await decryptText(raw, pass);
+  return validateImport(dec.text);
+}
+const CLOUD_ACT = {
+  async cloudConnect() {
+    const c = readCloudForm(); c.err = null; c.found = null; c.preview = null;
+    if (c.token.length < 20) { c.err = 'Colle le jeton GitHub en entier.'; refreshSheet(); return; }
+    if ((c.pass || '').length < 6) { c.err = 'Code secret trop court : 6 caractères minimum.'; refreshSheet(); return; }
+    c.busy = true; refreshSheet();
+    try {
+      const g = await findGist(c.token);
+      if (g) c.found = { id: g.id, at: g.updated_at };
+      else { CLOUD = { on: true, token: c.token, pass: c.pass, gist: null, last: null, err: null }; cloudStore(); cloudDirty = true; const ok = await cloudPush(true); if (ok) { ui.cloud = {}; toast('Sauvegarde cloud activée.'); } else c.err = CLOUD_ERR[CLOUD.err] || 'Échec de l’envoi.'; if (!ok) { CLOUD = null; cloudStore(); } }
+    } catch (e) { c.err = CLOUD_ERR[e.message] || 'Connexion impossible.'; }
+    c.busy = false; refreshSheet();
+  },
+  async cloudRestore() {
+    const c = readCloudForm(); c.err = null;
+    const token = CLOUD && CLOUD.on ? CLOUD.token : c.token, pass = CLOUD && CLOUD.on ? CLOUD.pass : c.pass, id = CLOUD && CLOUD.on ? CLOUD.gist : c.found && c.found.id;
+    if (!id) { toast('Aucune sauvegarde cloud pour l’instant.'); return; }
+    try { c.preview = await cloudFetchPreview(token, pass, id); } catch (e) { c.err = CLOUD_ERR[e.message] || 'Lecture impossible.'; c.preview = null; if (CLOUD && CLOUD.on) toast(c.err); }
+    refreshSheet();
+  },
+  async cloudOverwrite() {
+    const c = readCloudForm();
+    CLOUD = { on: true, token: c.token, pass: c.pass, gist: c.found.id, last: null, err: null }; cloudStore();
+    const ok = await cloudPush(true);
+    if (ok) { ui.cloud = {}; toast('Sauvegarde cloud activée.'); } else { c.err = CLOUD_ERR[CLOUD.err] || 'Échec de l’envoi.'; CLOUD = null; cloudStore(); }
+    refreshSheet();
+  },
+  cloudApply() {
+    const c = ui.cloud || {}, v = c.preview; if (!v || !v.ok) return;
+    if (!(CLOUD && CLOUD.on)) { CLOUD = { on: true, token: c.token, pass: c.pass, gist: c.found.id, last: Date.now(), err: null }; cloudStore(); }
+    backupNow(); S = v.data; applyTheme(); S.active = S.active && S.sessions[S.active]?.status === 'active' ? S.active : null; S.timer = null;
+    ui.cloud = {}; save(); cloudDirty = false; clearTimeout(cloudTimer); cloudTimer = null; closeSheet(); render(); toast('Données restaurées depuis le cloud.');
+  },
+  cloudCancel() { if (ui.cloud) ui.cloud.preview = null; refreshSheet(); },
+  async cloudNow() { cloudDirty = true; refreshSheet(); const ok = await cloudPush(true); toast(ok ? 'Sauvegarde envoyée.' : CLOUD_ERR[CLOUD.err] || 'Échec de l’envoi.'); },
+  cloudOff() { CLOUD = null; cloudStore(); ui.cloud = {}; refreshSheet(); toast('Sauvegarde cloud désactivée sur ce téléphone. Ton Gist reste sur GitHub.'); }
+};
+document.addEventListener('visibilitychange', () => { if (document.hidden && cloudDirty) cloudPush(); });
+window.addEventListener('online', () => { if (cloudDirty) cloudPush(); });
+
 function backupNow() { try { localStorage.setItem(BKEY, JSON.stringify({ at: new Date().toISOString(), data: S })); } catch (e) { } }
 
 /* ---- calendrier ---- */
@@ -1648,6 +1870,109 @@ function coachPlan(date, c) {
 }
 function restFor(sess, id) { return (S.profile.rest[id] || EX[id].rest[0]) + (sess && sess.adapt ? sess.adapt.rest || 0 : 0); }
 function formeLabel(c) { return checkComplete(c) ? CHECK_Q.map(q => q.t.toLowerCase() + ' ' + q.o[c[q.k]].toLowerCase()).join(' · ') : ''; }
+
+/* ---- série et badges ----
+   Série : activités prévues faites d’affilée (séance ou sortie). Les jours de repos ne cassent rien.
+   Une activité du jour pas encore faite ne casse pas non plus la série : elle reste à entretenir. */
+function dayKind(date) { const ci = calInfo(date); return ci.noStart || ci.before || ci.after ? null : ci.type; }
+function dayDone(date) { const t = dayKind(date); if (t === 'strength') return S.sessions[date]?.status === 'done'; if (t === 'run') { const r = S.runs[date]; return !!r && r.kind !== 'skipped'; } return null; }
+function streakInfo() {
+  const st = S.plan.startDate, t = today(), out = { cur: 0, best: 0, pending: false, todayDone: false };
+  if (!st || t < st) return out;
+  let run = 0, d = st;
+  const end = calInfo(t).after ? addD(st, S.plan.seq.length * 7 - 1) : t;
+  while (d <= end) {
+    const done = dayDone(d);
+    if (done === true) { run++; out.best = Math.max(out.best, run); if (d === t) out.todayDone = true; }
+    else if (done === false) { if (d === t) out.pending = true; else run = 0; }
+    d = addD(d, 1);
+  }
+  out.cur = run; return out;
+}
+function weekComplete(idx) { const w = weekStats({ idx }); return w.sd >= 3 && w.rd >= 2; }
+function weekStreak() {
+  const st = S.plan.startDate; if (!st) return { cur: 0, best: 0, weeks: [] };
+  const ci = calInfo(today()), last = ci.noStart || ci.before ? -1 : ci.after ? S.plan.seq.length - 1 : ci.idx;
+  const weeks = S.plan.seq.map((_, i) => ({ i, done: i <= last && weekComplete(i), cur: i === last && !ci.after }));
+  let cur = 0, best = 0, run = 0;
+  for (let i = 0; i <= last; i++) { if (weeks[i].done) { run++; best = Math.max(best, run); } else if (!(i === last && !ci.after)) run = 0; }
+  cur = run; return { cur, best, weeks };
+}
+const BADGE_CAT = { force: ['#FF8AB2', '#E2306C'], course: ['#B39CFF', '#6E4FE6'], regul: ['#FFD27A', '#F08A24'], suivi: ['#7FD3FF', '#2E86F0'] };
+const BADGES = [
+  { id: 'first_session', cat: 'force', ic: 'dumbbell', t: 'Premier pas', d: 'Termine ta première séance.', v: x => [x.sess, 1] },
+  { id: 'sessions_10', cat: 'force', ic: 'dumbbell', t: 'Dizaine', d: '10 séances terminées.', v: x => [x.sess, 10] },
+  { id: 'sessions_24', cat: 'force', ic: 'medal', t: 'Force tranquille', d: '24 séances : tout le programme de muscu.', v: x => [x.sess, 24] },
+  { id: 'level_1', cat: 'force', ic: 'up', t: 'Ça monte', d: 'Valide ta première montée de niveau.', v: x => [x.lv, 1] },
+  { id: 'level_5', cat: 'force', ic: 'up', t: 'Costaud', d: '5 montées de niveau.', v: x => [x.lv, 5] },
+  { id: 'first_run', cat: 'course', ic: 'run', t: 'Premières foulées', d: 'Note ta première sortie.', v: x => [x.runs, 1] },
+  { id: 'runs_10', cat: 'course', ic: 'run', t: 'Coureur régulier', d: '10 sorties notées.', v: x => [x.runs, 10] },
+  { id: 'min_300', cat: 'course', ic: 'timer', t: 'Cinq heures', d: '300 minutes de course cumulées.', v: x => [x.min, 300] },
+  { id: 'km_50', cat: 'course', ic: 'run', t: '50 km', d: '50 km cumulés (distance notée dans tes sorties).', v: x => [Math.floor(x.km), 50] },
+  { id: 'streak_7', cat: 'regul', ic: 'flame', t: 'En feu', d: '7 activités prévues d’affilée.', v: x => [x.streak, 7] },
+  { id: 'streak_15', cat: 'regul', ic: 'flame', t: 'Inarrêtable', d: '15 activités prévues d’affilée.', v: x => [x.streak, 15] },
+  { id: 'week_full', cat: 'regul', ic: 'check', t: 'Semaine parfaite', d: '3 séances et 2 sorties dans la même semaine.', v: x => [x.weeksDone, 1] },
+  { id: 'weeks_3', cat: 'regul', ic: 'spark', t: 'Trois d’affilée', d: '3 semaines parfaites de suite.', v: x => [x.weekBest, 3] },
+  { id: 'program_done', cat: 'regul', ic: 'medal', t: 'Élan complet', d: 'Toutes les semaines du programme parfaites.', v: x => [x.weeksDone, S.plan.seq.length] },
+  { id: 'weights_12', cat: 'suivi', ic: 'scale', t: 'Balance fidèle', d: '12 pesées notées.', v: x => [x.weights, 12] },
+  { id: 'checkins_10', cat: 'suivi', ic: 'spark', t: 'À l’écoute', d: '10 bilans avant séance.', v: x => [x.checks, 10] },
+  { id: 'early', cat: 'suivi', ic: 'timer', t: 'Lève-tôt', d: 'Une séance commencée avant 8 h.', v: x => [x.early, 1] },
+  { id: 'late', cat: 'suivi', ic: 'moon', t: 'Oiseau de nuit', d: 'Une séance commencée après 21 h.', v: x => [x.late, 1] }
+];
+function badgeStats() {
+  const done = Object.values(S.sessions).filter(x => x.status === 'done'), runs = Object.values(S.runs).filter(r => r.kind !== 'skipped');
+  const hr = x => new Date(x.startedAt).getHours();
+  const ws = weekStreak();
+  return {
+    sess: done.length, lv: Object.values(S.levels).reduce((a, l) => a + (l.hist || []).length, 0),
+    runs: runs.length, min: runs.filter(r => r.kind === 'run' || r.kind === 'runwalk').reduce((a, r) => a + (r.minutes || 0), 0), km: runs.reduce((a, r) => a + (r.km || 0), 0),
+    streak: streakInfo().best, weeksDone: ws.weeks.filter(w => w.done).length, weekBest: ws.best,
+    weights: S.weights.length, checks: Object.values(S.checkins).filter(checkComplete).length,
+    early: done.some(x => x.startedAt && hr(x) < 8) ? 1 : 0, late: done.some(x => x.startedAt && hr(x) >= 21) ? 1 : 0
+  };
+}
+function badgeList() { const x = badgeStats(); return BADGES.map(b => { const [cur, tg] = b.v(x); return { ...b, cur: Math.min(cur, tg), tg, done: cur >= tg, at: S.badges[b.id] || null }; }); }
+function medalSVG(b, locked) {
+  const [c1, c2] = locked ? ['#4A4D6B', '#34365A'] : BADGE_CAT[b.cat];
+  const gid = 'bg-' + b.id + (locked ? '-l' : '');
+  return '<svg class="medal" viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + c1 + '"/><stop offset="1" stop-color="' + c2 + '"/></linearGradient></defs>' +
+    '<path d="M40 3 71 20.5v39L40 77 9 59.5v-39z" fill="url(#' + gid + ')"/><path d="M40 10 65 24v32L40 70 15 56V24z" fill="none" stroke="rgba(255,255,255,' + (locked ? '.12' : '.45') + ')" stroke-width="2"/>' +
+    '<g transform="translate(26 26) scale(1.17)" class="mi' + (locked ? ' lk' : '') + '">' + I[b.ic].replace(/<svg[^>]*>/, '').replace('</svg>', '') + '</g></svg>';
+}
+let badgeQueue = [];
+function checkBadges() {
+  if (!S.plan.startDate && !Object.keys(S.sessions).length) return;
+  const fresh = badgeList().filter(b => b.done && !S.badges[b.id]);
+  if (!fresh.length) return;
+  fresh.forEach(b => S.badges[b.id] = today()); save();
+  badgeQueue = badgeQueue.concat(fresh);
+  setTimeout(showUnlock, INTRO ? 1400 : 500);
+}
+function showUnlock() {
+  const el = document.getElementById('unlock');
+  if (!badgeQueue.length || !el.hidden) return;
+  if (ui.sess || !document.getElementById('celebrate').hidden || INTRO) { setTimeout(showUnlock, 800); return; }
+  const list = badgeQueue; badgeQueue = [];
+  const one = list.length === 1, b = list[0];
+  el.innerHTML = '<div class="ul-in"><div class="ul-rays"></div><div class="ul-medals' + (one ? '' : ' many') + '">' + list.slice(0, 8).map((x, k) => '<div class="ul-m" style="--k:' + k + '">' + medalSVG(x) + '</div>').join('') + '</div>' +
+    '<div class="burst">' + Array.from({ length: 16 }, (_, k) => '<i style="--a:' + (k * 22.5) + 'deg"></i>').join('') + '</div>' +
+    '<div class="eyebrow">' + (one ? 'Badge débloqué' : list.length + ' badges débloqués') + '</div><h2>' + (one ? esc(b.t) : 'Bravo !') + '</h2><p class="muted">' + (one ? esc(b.d) : list.map(x => esc(x.t)).join(' · ')) + '</p>' +
+    '<button class="btn primary xl" data-act="unlockClose">Continuer</button><button class="linkbtn" data-act="badgesOpen">Voir mes badges</button></div>';
+  el.hidden = false; el.classList.remove('out'); haptic([20, 50, 20, 50, 40]);
+}
+function closeUnlock() { const el = document.getElementById('unlock'); el.classList.add('out'); setTimeout(() => { el.hidden = true; el.innerHTML = ''; el.classList.remove('out'); showUnlock(); }, RM() ? 0 : 280); }
+function streakChip() {
+  const si = streakInfo(); if (!S.plan.startDate) return '';
+  return '<button class="streak' + (si.cur ? ' on' : '') + (si.pending ? ' pending' : '') + '" data-act="badgesOpen" aria-label="Série : ' + si.cur + ' activités d’affilée">' + I.flame + '<b class="tnum">' + si.cur + '</b></button>';
+}
+function badgesSheetHTML() {
+  const si = streakInfo(), ws = weekStreak(), list = badgeList(), got = list.filter(b => b.done).length;
+  let h = sheetHead('Série et badges', got + ' / ' + list.length + ' badges');
+  h += '<section class="streak-hero' + (si.cur ? ' on' : '') + '"><div class="sh-flame">' + I.flame + '</div><div><b class="tnum">' + si.cur + '</b><span>activité' + (si.cur > 1 ? 's' : '') + ' d’affilée</span><span class="note">' + (si.pending ? 'Celle d’aujourd’hui t’attend pour l’entretenir.' : si.todayDone ? 'Entretenue aujourd’hui.' : 'Les jours de repos ne cassent pas la série.') + ' Record : ' + si.best + '</span></div></section>';
+  h += '<div class="field"><span>Semaines parfaites · 3 séances + 2 sorties' + (ws.cur ? ' · ' + ws.cur + ' d’affilée' : '') + '</span><div class="wkdots">' + ws.weeks.map(w => '<i class="' + (w.done ? 'done' : w.cur ? 'cur' : '') + '">' + (w.done ? I.check : 'S' + S.plan.seq[w.i]) + '</i>').join('') + '</div></div>';
+  h += '<div class="badges">' + list.map(b => '<div class="bdg' + (b.done ? ' got' : '') + '">' + medalSVG(b, !b.done) + '<b>' + esc(b.t) + '</b><span>' + (b.done ? (b.at ? 'le ' + fmtD(b.at) : 'obtenu') : esc(b.d)) + '</span>' + (!b.done && b.tg > 1 ? '<div class="bp"><i style="width:' + Math.round(b.cur / b.tg * 100) + '%"></i></div><span class="tnum bpn">' + b.cur + ' / ' + b.tg + '</span>' : '') + '</div>').join('') + '</div>';
+  return h;
+}
 
 /* ---- course ---- */
 const RUNKINDS = { run: 'Course facile', runwalk: 'Course et marche', walk: 'Marche', badminton: 'Badminton (remplace la sortie)', skipped: 'Non faite' };
@@ -1940,6 +2265,8 @@ const I = {
   save: sv('<path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 17v3.5h15V17"/>'),
   phone: sv('<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/>'),
   spark: sv('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>'),
+  flame: sv('<path d="M12 22c4 0 7-2.8 7-6.8 0-3.2-2-5.6-3.6-7.4-.4 1.8-1.4 3-2.6 3.4.4-3-1-6.2-3.8-8.2.2 3.2-1.6 5.2-3.2 7.2C4.6 12 4 13.6 4 15.4 4 19.2 7.6 22 12 22z"/><path d="M12 22c-1.8 0-3-1.2-3-2.9 0-1.8 1.4-2.8 2.2-4.1.8 1 2.6 2 3 3.6.5 1.9-.5 3.4-2.2 3.4z"/>'),
+  medal: sv('<circle cx="12" cy="14.5" r="6"/><path d="m8.5 9.6-3-6.1h4.5l2 4M15.5 9.6l3-6.1H14l-2 4M12 12v5"/>'),
   moon: sv('<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>'),
   leaf: sv('<path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14zM5 19l7-7"/>'),
   timer: sv('<circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5"/>'),
@@ -2042,7 +2369,7 @@ const ART = { A: 'squat', B: 'row_band' };
 function scrToday() {
   const t = today(), ci = calInfo(t), p = S.profile;
   let h = '<section class="screen' + stg() + '">';
-  h += '<header class="top"><div><div class="eyebrow">' + (ci.idx != null ? weekLabel(ci.idx) + ' · ' : '') + fmtDL(t) + '</div><h1 class="title-xl">Salut, <em>' + esc(p.name) + '</em></h1></div><a class="avatar" href="#profile" aria-label="Profil">' + esc((p.name || 'T')[0].toUpperCase()) + '</a></header>';
+  h += '<header class="top"><div><div class="eyebrow">' + (ci.idx != null ? weekLabel(ci.idx) + ' · ' : '') + fmtDL(t) + '</div><h1 class="title-xl">Salut, <em>' + esc(p.name) + '</em></h1></div><div class="row" style="gap:8px;flex:none">' + streakChip() + '<a class="avatar" href="#profile" aria-label="Profil">' + esc((p.name || 'T')[0].toUpperCase()) + '</a></div></header>';
   const act = S.active && S.sessions[S.active];
   if (act && act.status === 'active') {
     const n = doneSetsCount(act);
@@ -2294,7 +2621,7 @@ function previewSheet(kind, pw, date) {
 }
 function exSheet(id) {
   const ex = EX[id];
-  openSheet(sheetHead(ex.name, rangeLabel(id) + ' · repos ' + restLabel(id)) + stageHTML(id, 'sheet-' + id) + pairHTML(id) + '<p class="small"><span class="muted">Niveau actuel :</span> ' + levelLabel(id) + '</p>' + cuesHTML(id));
+  openSheet(sheetHead(ex.name, rangeLabel(id) + ' · repos ' + restLabel(id)) + (exHistory(id).length ? '<section class="card"><h2>Ta courbe</h2>' + forceChart(id) + '</section>' : '') + stageHTML(id, 'sheet-' + id) + pairHTML(id) + '<p class="small"><span class="muted">Niveau actuel :</span> ' + levelLabel(id) + '</p>' + cuesHTML(id));
 }
 function mobSheet(date) {
   const fn = () => {
@@ -2423,9 +2750,66 @@ function weightsSheet() {
   };
   openSheet(fn(), fn);
 }
+/* ---- courbe de force : meilleure série par séance, niveaux, première séance contre maintenant ---- */
+function exHistory(id) {
+  return Object.values(S.sessions).filter(x => x.status === 'done').sort((a, b) => a.date.localeCompare(b.date))
+    .map(x => { const e = x.ex.find(y => y.id === id && !y.skipped && y.sets.length); return e ? { date: x.date, wk: x.idx != null ? x.idx + 1 : null, best: Math.max(...e.sets.map(z => z.reps)), total: e.sets.reduce((a, z) => a + z.reps, 0), level: e.level || 0, reduced: !!x.reduced } : null; })
+    .filter(Boolean);
+}
+function lvlShort(id, l) { const ex = EX[id]; if (ex.unit === 'sec') return 'cible ' + targetSec(id, l) + ' s'; if (ex.band) return l ? 'tension +' + l : 'tension de départ'; return ex.levels[Math.min(l, ex.levels.length - 1)]; }
+function forceDelta(id) {
+  const hs = exHistory(id); if (hs.length < 2) return null;
+  const a = hs[0], b = hs[hs.length - 1], dl = b.level - a.level, d = b.best - a.best;
+  return { a, b, dl, d, pct: a.best ? Math.round(d / a.best * 100) : 0 };
+}
+function deltaPill(fd, ex) {
+  if (!fd) return '';
+  if (fd.dl > 0) return pill('+' + fd.dl + ' niv.', 'solid');
+  return pill((fd.d >= 0 ? '+' : '') + fd.d + (ex.unit === 'sec' ? ' s' : ' rép.'), fd.d > 0 ? 'acc' : '');
+}
+function sparkSVG(hs) {
+  if (hs.length < 2) return '';
+  const W = 76, H = 26, vals = hs.map(h => h.best + h.level * 1000), lo = Math.min(...vals), hi = Math.max(...vals), r = hi - lo || 1;
+  const pts = hs.map((h, i) => [(i / (hs.length - 1) * (W - 6) + 3).toFixed(1), (H - 4 - (vals[i] - lo) / r * (H - 8)).toFixed(1)]);
+  return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><path d="M' + pts.map(p => p.join(' ')).join(' L') + '"/><circle cx="' + pts[pts.length - 1][0] + '" cy="' + pts[pts.length - 1][1] + '" r="2.6"/></svg>';
+}
+function forceChart(id) {
+  const hs = exHistory(id), ex = EX[id], u = ex.unit === 'sec' ? ' s' : '';
+  if (!hs.length) return '<p class="note">La courbe apparaît après ta première séance avec cet exercice.</p>';
+  const W = 320, H = 168, L = 30, Rr = 12, T = 30, B = 26, n = hs.length;
+  const vals = hs.map(h => h.best); let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (hi - lo < 4) { lo -= 2; hi += 2; } lo = Math.max(0, Math.floor(lo - 1)); hi = Math.ceil(hi + 1);
+  const x = i => n === 1 ? (L + W - Rr) / 2 : L + i / (n - 1) * (W - L - Rr), y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+  let g = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Meilleure série par séance"><defs><linearGradient id="fgrad" x1="0" x2="0" y1="0" y2="1"><stop class="g0" offset="0"/><stop class="g1" offset="1"/></linearGradient></defs>';
+  [lo, (lo + hi) / 2, hi].forEach(v => { g += '<line class="gl" x1="' + L + '" x2="' + (W - Rr) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '"></line><text x="' + (L - 6) + '" y="' + (y(v) + 4).toFixed(1) + '" text-anchor="end">' + Math.round(v) + '</text>'; });
+  hs.forEach((h, i) => { if (i && h.level !== hs[i - 1].level) { const xx = ((x(i - 1) + x(i)) / 2).toFixed(1); g += '<line class="lvl" x1="' + xx + '" x2="' + xx + '" y1="' + (T - 14) + '" y2="' + (H - B) + '"></line><text class="lvlt" x="' + xx + '" y="' + (T - 18) + '" text-anchor="middle">Niv. ' + (h.level + 1) + '</text>'; } });
+  const pts = hs.map((h, i) => [x(i), y(h.best)]), d = pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
+  if (n > 1) g += '<path class="ar" style="fill:url(#fgrad)" d="M' + d + ' L' + pts[n - 1][0].toFixed(1) + ' ' + (H - B) + ' L' + pts[0][0].toFixed(1) + ' ' + (H - B) + ' Z"></path><path class="ln" d="M' + d + '"></path>';
+  pts.forEach((p, i) => { g += '<circle class="pt' + (i === n - 1 ? ' last' : '') + (hs[i].reduced ? ' red' : '') + '" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="4"></circle>'; });
+  const lp = pts[n - 1], lab = hs[n - 1].best + u, tw = lab.length * 6.4 + 12, tx = Math.min(W - tw - 2, Math.max(L, lp[0] - tw / 2)), ty = Math.max(0, lp[1] - 30);
+  g += '<g class="tag"><rect x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" width="' + tw.toFixed(1) + '" height="19" rx="9.5"></rect><text x="' + (tx + tw / 2).toFixed(1) + '" y="' + (ty + 13).toFixed(1) + '" text-anchor="middle">' + lab + '</text></g>';
+  const wl = h => h.wk ? 'S' + h.wk : fmtShort(h.date);
+  g += '<text x="' + x(0).toFixed(1) + '" y="' + (H - 6) + '"' + (n === 1 ? ' text-anchor="middle"' : '') + '>' + wl(hs[0]) + '</text>' + (n > 1 ? '<text x="' + x(n - 1).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="end">' + wl(hs[n - 1]) + '</text>' : '') + '</svg>';
+  let h = '<div class="chart">' + g + '</div>';
+  const fd = forceDelta(id);
+  if (fd) {
+    const side = (t, r) => '<div><span class="eyebrow">' + t + (r.wk ? ' · S' + r.wk : '') + '</span><b class="tnum">' + r.best + '<small>' + unitShort(ex) + '</small></b><span class="note">' + esc(lvlShort(id, r.level)) + '</span></div>';
+    h += '<div class="vs">' + side('Première séance', fd.a) + '<span class="vs-arrow">' + I.fwd + '</span>' + side('Dernière séance', fd.b) + '</div>';
+    h += '<p class="note">' + (fd.dl > 0 ? 'Tu as monté ' + plural(fd.dl, 'niveau') + ' : à chaque niveau, tu repars en bas de la fourchette, c’est normal que les répétitions redescendent.' : fd.d > 0 ? '+' + fd.d + (ex.unit === 'sec' ? ' s' : ' répétitions') + ' sur ta meilleure série (' + (fd.pct > 0 ? '+' + fd.pct + ' %' : '') + ').' : 'Même niveau, même meilleure série : la régularité finit par payer.') + '</p>';
+  }
+  return h + '<p class="note">Meilleure série de chaque séance. Les points creux sont des séances allégées.</p>';
+}
+function forceOverview() {
+  const ids = progressIds().filter(id => exHistory(id).length);
+  if (!ids.length) return '';
+  return '<section class="card"><div class="row between"><h2>Depuis le début</h2><span class="note">meilleure série</span></div><div class="list">' + ids.map(id => {
+    const hs = exHistory(id), ex = EX[id], fd = forceDelta(id), a = hs[0], b = hs[hs.length - 1];
+    return '<button class="li fo" data-act="exSheet" data-id="' + id + '"><div><div class="t">' + ex.short + '</div><div class="s tnum">' + (hs.length > 1 ? a.best + ' → ' + b.best + unitShort(ex) : b.best + unitShort(ex)) + '</div></div>' + sparkSVG(hs) + (deltaPill(fd, ex) || '<span></span>') + '</button>';
+  }).join('') + '</div></section>';
+}
 function tabForce() {
   const ids = progressIds();
-  let h = '';
+  let h = forceOverview();
   for (const id of ids.filter(id => suggestion(id).state === 'ready')) h += '<section class="card" style="box-shadow:inset 0 0 0 1px var(--acc-line)"><div class="daily"><span class="ic">' + I.up + '</span><div><div class="t">' + EX[id].name + '</div><div class="s">Critères remplis deux séances de suite</div></div><span></span></div><p class="small">Proposition : <b>' + nextLevelText(id) + '</b>, puis repartir en bas de la fourchette.</p><div class="btns"><button class="btn primary" data-act="acceptLevel" data-id="' + id + '">Valider</button><button class="btn" data-act="laterLevel" data-id="' + id + '">Plus tard</button></div></section>';
   h += '<div class="group">' + ids.map(id => {
     const last = doneLogs(id)[0] || lastLogOf(id), sg = suggestion(id), ex = EX[id];
@@ -2477,7 +2861,8 @@ function scrProfile() {
     listRow('profSheet', 'bowl', '', 'Recette du shaker', p.recipe.text ? (p.recipe.kcal ? p.recipe.kcal + ' kcal' : 'Recette notée') : 'À compléter', '', 'data-k="recipe"') + '</div>';
   h += '<div class="group">' + listRow('profSheet', 'band', 'n', 'Mes bandes', p.bands.length ? plural(p.bands.length, 'bande') : 'Aucune bande notée', '', 'data-k="bands"') +
     listRow('profSheet', 'bell', 'n', 'Affichage et son', ({ nuit: 'Thème Nuit', peche: 'Thème Pêche', menthe: 'Thème Menthe', dark: 'Thème sombre' })[S.profile.theme] + ' · fin du repos', '', 'data-k="session"') + '</div>';
-  h += '<div class="group">' + listRow('profSheet', 'save', 'run', 'Sauvegarde', 'Exporter, restaurer, effacer', '', 'data-k="data"') +
+  h += '<div class="group">' + listRow('badgesOpen', 'medal', 'warn', 'Série et badges', badgeList().filter(b => b.done).length + ' / ' + BADGES.length + ' badges · série de ' + streakInfo().cur) + '</div>';
+  h += '<div class="group">' + listRow('profSheet', 'save', CLOUD && CLOUD.on && !(CLOUD.err && CLOUD.err !== 'net') ? '' : 'warn', 'Sauvegarde cloud', cloudStatus(), '', 'data-k="cloud"') + listRow('profSheet', 'save', 'run', 'Sauvegarde', 'Exporter, restaurer, effacer', '', 'data-k="data"') +
     listRow('profSheet', 'phone', 'n', 'Installation', STANDALONE ? 'Installée' : FRAMED ? 'Version en ligne' : 'Écran d’accueil', '', 'data-k="install"') +
     listRow('profSheet', 'info', 'n', 'À propos', 'Données, limites') + '</div>';
   return h + '</section>';
@@ -2493,12 +2878,13 @@ const PROF = {
     '<div class="grid2"><input class="input" id="bandName" maxlength="40" placeholder="Nom ou couleur" aria-label="Nom de la bande"><input class="input" id="bandNote" maxlength="120" placeholder="Note (facultatif)" aria-label="Note"></div><button class="btn primary block" data-act="addBand">Ajouter</button>',
   session: () => sheetHead('Affichage et son') + '<div class="field"><span>Thème</span><div class="seg flat">' + [['nuit', 'Nuit'], ['peche', 'Pêche'], ['menthe', 'Menthe'], ['dark', 'Sombre']].map(([k, l]) => '<button class="' + (S.profile.theme === k ? 'on' : '') + '" data-act="setTheme" data-v="' + k + '">' + l + '</button>').join('') + '</div></div>' + (M3.ok ? '<label class="toggle"><span>Animations en 3D<br><span class="note">Mannequin à faire tourner au doigt</span></span><input type="checkbox" data-chg="bool" data-path="profile.anim3d"' + (S.profile.anim3d !== false ? ' checked' : '') + '></label>' : '') + '<label class="toggle"><span>Son en fin de repos<br><span class="note">Application ouverte à l’écran</span></span><input type="checkbox" data-chg="bool" data-path="profile.sound"' + (S.profile.sound ? ' checked' : '') + '></label><label class="toggle"><span>Vibration<br><span class="note">Fin de repos et validations</span></span><input type="checkbox" data-chg="bool" data-path="profile.vibrate"' + (S.profile.vibrate ? ' checked' : '') + '></label><p class="note">Le minuteur garde son heure de fin même en arrière-plan. Aucune alarme n’est garantie écran éteint.</p>',
   data: () => dataSheet(),
+  cloud: () => cloudSheetHTML(),
   install: () => installSheet(),
   about: () => sheetHead('Élan', 'Force · course · 8 semaines') + '<div class="cues"><p>Élan, c’est l’élan qu’on prend semaine après semaine. Application personnelle, sans compte ni publicité. Tes saisies restent dans ce navigateur, sur ce téléphone, et ne sont envoyées nulle part.</p><p class="note">' + FIG_LIMIT + '</p><p class="note">Ce programme ne remplace pas un avis médical.</p></div>'
 };
 function dataSheet() {
   const canFile = !FRAMED || !!DL;
-  let h = sheetHead('Sauvegarde') + '<p class="small muted">Tout est stocké sur ce téléphone. Effacer les données du site, changer de navigateur ou de téléphone fait tout disparaître : exporte une fois par semaine.</p>';
+  let h = sheetHead('Sauvegarde') + (CLOUD && CLOUD.on ? '<p class="small muted">Sauvegarde cloud active (' + agoLabel(CLOUD.last) + '). Tu peux aussi garder un fichier de temps en temps.</p>' : '<p class="small muted">Tout est stocké sur ce téléphone. Active la sauvegarde cloud dans Profil, ou exporte une fois par semaine.</p>');
   h += '<div class="btns">' + (canFile ? '<button class="btn primary" data-act="exportFile">' + I.save + 'Télécharger</button>' : '') + '<button class="btn' + (canFile ? '' : ' primary') + '" data-act="exportCopy">Copier le texte</button></div>';
   if (ui.exportText) h += '<textarea class="input" id="exportBox" readonly style="min-height:100px;font-size:12px" aria-label="Sauvegarde">' + esc(ui.exportText) + '</textarea>';
   h += '<hr class="sep"><div class="eyebrow">Restaurer</div><label class="btn block" style="position:relative;overflow:hidden">Choisir un fichier .json<input type="file" accept="application/json,.json" id="importFile" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label>' +
@@ -2749,7 +3135,7 @@ function tick() {
 }
 let actx = null;
 function unlockAudio() { if (!S.profile.sound) return; try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { actx = null; } }
-function haptic(p) { if (S.profile.vibrate && navigator.vibrate) try { navigator.vibrate(p); } catch (e) { } }
+function haptic(p) { if (S.profile.vibrate && navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) try { navigator.vibrate(p); } catch (e) { } }
 function buzz() {
   haptic([180, 90, 180]);
   if (S.profile.sound && actx && !document.hidden) {
@@ -2843,7 +3229,9 @@ const SACT = {
     if (wasEdit) toast('Corrections enregistrées.');
     else celebrate(s);
   },
-  celClose() { closeCelebrate(); const ready = progressIds().filter(id => suggestion(id).state === 'ready').length; if (ready) toast('Progression proposée : voir Progression › Force.'); },
+  badgesOpen() { if (!document.getElementById('unlock').hidden) closeUnlock(); openSheet(badgesSheetHTML(), badgesSheetHTML); },
+  unlockClose() { closeUnlock(); },
+  celClose() { closeCelebrate(); setTimeout(checkBadges, 400); const ready = progressIds().filter(id => suggestion(id).state === 'ready').length; if (ready) toast('Progression proposée : voir Progression › Force.'); },
   tAdj(el) { const tm = S.timer; if (!tm) return; const d = +el.dataset.v * 1000; if (tm.left != null) tm.left = Math.max(0, tm.left + d); else tm.endAt = Math.max(Date.now(), tm.endAt + d); tm.total = Math.max(5, tm.total + (+el.dataset.v)); if (timerLeft() > 0) tm.rang = false; save(); renderRest(); },
   tToggle() { const tm = S.timer; if (!tm) return; if (tm.left != null) { tm.endAt = Date.now() + tm.left; tm.left = null; } else { tm.left = timerLeft(); tm.endAt = null; } save(); renderRest(); },
   tSkip() { S.timer = null; save(); const el = document.getElementById('restbar'); if (RM()) { renderRest(); return; } el.style.transition = 'transform .25s var(--ease)'; el.style.transform = 'translateY(100%)'; setTimeout(() => { el.style.transition = ''; el.style.transform = ''; renderRest(); }, 230); },
@@ -2966,6 +3354,7 @@ function render(opts = {}) {
   if (anim && !RM()) { const first = !SEEN.has(route); SEEN.add(route); const go = () => { requestAnimationFrame(() => requestAnimationFrame(ringGo)); if (first) countUps(app); }; INTRO ? INTRO.then(go) : go(); }
   else { app.querySelectorAll('.wring .f, .wring .tip').forEach(c => c.style.transition = 'none'); ringGo(); }
   prevRoute = route; ANIM = false;
+  if (!ui.sess) checkBadges();
   const idx = ORDER.indexOf(route), ind = tabs.querySelector('.ind');
   if (ind) ind.style.transform = 'translateX(' + (idx * 100) + '%)';
   tabs.querySelectorAll('a').forEach(a => a.getAttribute('href') === '#' + route ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
@@ -3142,7 +3531,8 @@ const ACT = {
   resetDo() { backupNow(); S = defaults(); ui.confirmReset = false; ui.sess = false; save(); closeSheet(true); renderSession(); render(); toast('Données effacées. Copie de sécurité conservée.'); },
   install() { if (!installEvt) return; installEvt.prompt(); installEvt.userChoice.finally(() => { installEvt = null; rerender(); }); },
   doPrint() { try { window.print(); } catch (e) { toast('Impression indisponible ici.'); } },
-  ...SACT
+  ...SACT,
+  ...CLOUD_ACT
 };
 function captureRunForm() {
   const f = ui.runForm && ui.runForm.f; if (!f) return;
@@ -3208,7 +3598,7 @@ document.addEventListener('input', e => {
   if (el.id === 'repsIn') { const s = curSess(), ex = s && s.ex[s.pos]; if (ex && ex.draft) { ex.draft.reps = clamp(Math.round(+el.value || 0), 0, 120); save(); } }
   if (el.id === 'sNote') { const s = curSess(); if (s) { s.note = el.value.slice(0, 400); save(); } }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!document.getElementById('celebrate').hidden) closeCelebrate(); else if (!document.getElementById('sheet').hidden) closeSheet(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!document.getElementById('unlock').hidden) { closeUnlock(); return; } if (!document.getElementById('celebrate').hidden) closeCelebrate(); else if (!document.getElementById('sheet').hidden) closeSheet(); } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); if (ui.sess) requestWake(); } });
 window.addEventListener('storage', e => { if (e.key === KEY && e.newValue) { S = load(); applyTheme(); render(); renderSession(); } });
 

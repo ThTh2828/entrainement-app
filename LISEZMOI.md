@@ -32,6 +32,19 @@ N’importe quel hébergement https de fichiers statiques convient aussi.
 
 Avant chaque séance, trois touches : sommeil, énergie, courbatures. Le coach les croise avec tes dernières saisies (fatigue, douleur, réserve) et propose un niveau : feu vert, plan normal, séance ajustée (1 série de moins sur les compléments, +15 s de repos) ou version allégée. Tu peux toujours garder le plan normal. Les jours de course, le même bilan donne un conseil de durée. Tout est calculé sur le téléphone, sans connexion.
 
+## Sauvegarde cloud
+
+Profil → Sauvegarde cloud. Il faut un jeton GitHub avec le seul droit « gist » (le bouton « Ouvrir GitHub » le pré-coche) et un code secret de ton choix. Ensuite, chaque modification part toute seule, quelques secondes après, dans un Gist secret de ton compte.
+
+- Le contenu est chiffré sur le téléphone (AES-256, clé tirée de ton code secret) : GitHub ne voit qu’un bloc illisible. Sans le code secret, personne ne peut relire la sauvegarde, toi compris : note-le.
+- Le jeton et le code restent sur le téléphone ; ils ne font pas partie des sauvegardes.
+- Nouveau téléphone : installe Élan, Profil → Sauvegarde cloud, même jeton et même code, puis « La restaurer ici ».
+- Si le jeton expire, la fiche passe en « À vérifier » : crée-en un nouveau et reconnecte-toi.
+
+## Série et badges
+
+La flamme compte les activités prévues faites d’affilée (séance ou sortie) ; les jours de repos ne la cassent pas. Une semaine parfaite, c’est 3 séances et 2 sorties. 18 badges à débloquer, visibles en touchant la flamme.
+
 ## Tes données
 
 - Elles sont enregistrées dans le navigateur du téléphone, pour cette adresse uniquement.
