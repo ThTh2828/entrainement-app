@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="8 semaines">
 <meta name="description" content="Programme personnel de musculation et de course sur huit semaines.">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192-v2.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Théo 8 semaines</title>
 <style>
@@ -2276,7 +2276,7 @@ function boot() {
   if (!FRAMED) {
     const add = (rel, href, extra) => { const l = document.createElement('link'); l.rel = rel; l.href = href; if (extra) Object.assign(l, extra); document.head.appendChild(l); };
     add('manifest', 'manifest.webmanifest');
-    add('apple-touch-icon', 'icons/apple-touch-icon.png');
+    add('apple-touch-icon', 'icons/apple-touch-icon-v2.png');
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) navigator.serviceWorker.register('sw.js').catch(() => { });
   }
 }
