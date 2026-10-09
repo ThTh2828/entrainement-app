@@ -791,8 +791,8 @@ button.coach { appearance: none; border: 0; text-align: left; color: inherit; wi
 .coach-ring b { font: 800 18px/1 var(--f-display); } .coach-ring span { font-size: 9.5px; color: var(--muted); }
 
 /* ---------- vie des écrans ---------- */
-.ghost { position: fixed; z-index: 0; pointer-events: none; animation: ghostOut .3s var(--ease) forwards !important; }
-.ghost * { animation: none !important; transition: none !important; }
+.scr-ghost { position: fixed; z-index: 0; pointer-events: none; animation: ghostOut .3s var(--ease) forwards !important; }
+.scr-ghost * { animation: none !important; transition: none !important; }
 @keyframes ghostOut { to { opacity: 0; transform: translateX(var(--gx, 0)); } }
 :root[data-ui="nuit"] .hero-media::before { content: ''; position: absolute; width: 70%; aspect-ratio: 1; left: 40%; top: -20%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 79, 139, .35), transparent); animation: orb 9s ease-in-out infinite alternate; pointer-events: none; }
 :root[data-ui="nuit"] .hero.run .hero-media::before { background: radial-gradient(closest-side, rgba(140, 108, 255, .45), transparent); }
@@ -2340,6 +2340,7 @@ function runSheet(date) {
 function renderRunSheet() {
   const { date, f } = ui.runForm, ci = calInfo(date), a = runAdvice(date);
   let h = sheetHead('Sortie du ' + fmtD(date), ci.planned != null ? 'Prévu : ' + ci.planned + ' min de footing' : 'Sortie cardio');
+  if (S.runs[date]) h += '<label class="field"><span>Date de la sortie</span><input class="input" type="date" id="rfDate" value="' + (ui.runForm.newDate || date) + '" max="' + today() + '"></label>';
   if (a.level !== 'ok') h += alertBox(a.level === 'stop' ? 'bad' : 'warn', 'warn', a.text);
   h += '<div class="chips grid5" style="grid-template-columns:repeat(3,1fr)">' + Object.keys(RUNKINDS).map(k => '<button class="chip runon' + (f.kind === k ? ' on' : '') + '" data-act="rf" data-k="kind" data-v="' + k + '">' + ({ run: 'Course', runwalk: 'Course + marche', walk: 'Marche', badminton: 'Badminton', skipped: 'Non faite' })[k] + '</button>').join('') + '</div>';
   if (f.kind !== 'skipped') {
@@ -2350,7 +2351,7 @@ function renderRunSheet() {
   }
   h += '<label class="field"><span>Note</span><textarea class="input" id="rfNote" maxlength="300" style="min-height:60px" placeholder="facultatif">' + esc(f.note) + '</textarea></label>';
   h += '<button class="btn runb xl block" data-act="saveRun">Enregistrer</button>';
-  if (S.runs[date]) h += '<button class="btn ghost block" data-act="delRun" data-date="' + date + '">Supprimer la saisie</button>';
+  if (S.runs[date]) h += '<button class="btn ghost block" data-act="delRun" data-date="' + date + '">Supprimer la sortie</button>';
   openSheet(h);
 }
 function confirmSheet(title, text, act, label, extra = '') {
@@ -2949,11 +2950,11 @@ function render(opts = {}) {
   const old = changed && prevRoute && prevRoute !== 'print' && !RM() ? app.firstElementChild : null;
   if (old) {
     const r = old.getBoundingClientRect(), g = old.cloneNode(true);
-    g.classList.remove('stagger', 'enter', 'enter-r', 'enter-l'); g.classList.add('ghost'); g.removeAttribute('id');
+    g.classList.remove('stagger', 'enter', 'enter-r', 'enter-l'); g.classList.add('scr-ghost'); g.removeAttribute('id');
     g.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
     Object.assign(g.style, { top: r.top + 'px', left: r.left + 'px', width: r.width + 'px' });
     g.style.setProperty('--gx', (ORDER.indexOf(route) > ORDER.indexOf(prevRoute) ? -18 : 18) + 'px');
-    document.querySelectorAll('.ghost').forEach(n => n.remove());
+    document.querySelectorAll('.scr-ghost').forEach(n => n.remove());
     document.body.appendChild(g); setTimeout(() => g.remove(), 260);
   }
   app.innerHTML = ROUTES[route]();
@@ -3087,7 +3088,9 @@ const ACT = {
   rfMin(el) { captureRunForm(); const f = ui.runForm.f; f.minutes = clamp((+f.minutes || 0) + (+el.dataset.d), 0, 240); const inp = document.getElementById('rfMinutes'); if (inp) { inp.value = f.minutes; inp.classList.remove('bump'); void inp.offsetWidth; inp.classList.add('bump'); } },
   saveRun() {
     captureRunForm();
-    const { date, f } = ui.runForm, ci = calInfo(date);
+    const { f } = ui.runForm, old = ui.runForm.date, date = ui.runForm.newDate && ui.runForm.newDate <= today() ? ui.runForm.newDate : old, ci = calInfo(date);
+    if (date !== old && S.runs[date]) { toast('Une sortie est déjà notée le ' + fmtD(date) + '.'); return; }
+    if (date !== old) delete S.runs[old];
     const rec = { date, planned: ci.planned ?? null, kind: f.kind, minutes: f.kind === 'skipped' ? 0 : clamp(Math.round(+f.minutes || 0), 0, 240), km: f.km === '' || f.km == null ? null : Math.max(0, Math.round(parseFloat(String(f.km).replace(',', '.')) * 100) / 100) || null,
       effort: f.effort, painDuring: f.painDuring, painAfter: f.painAfter, swelling: f.swelling, limp: f.limp, legsTired: f.legsTired, note: (f.note || '').slice(0, 300), nextDay: f.nextDay };
     if (f.kind === 'skipped') Object.assign(rec, { effort: null, painDuring: false, painAfter: false, swelling: false, limp: false, legsTired: false });
@@ -3095,7 +3098,8 @@ const ACT = {
     if (runFlag(rec)) openSheet(sheetHead('Douleur signalée') + alertBox('bad', 'warn', 'Les prochaines sorties sont en pause jusqu’à ce que tu indiques que la douleur a disparu. Si elle persiste, demande un avis médical.') + '<button class="btn block" data-act="closeSheet">Compris</button>');
     else { closeSheet(); toast('Sortie enregistrée.'); }
   },
-  delRun(el) { delete S.runs[el.dataset.date]; save(); closeSheet(); render(); toast('Saisie supprimée.'); },
+  delRun(el) { const d = el.dataset.date; confirmSheet('Supprimer la sortie ?', 'La sortie du ' + fmtD(d) + ' sera effacée.', 'delRunOk', 'Supprimer', 'data-date="' + d + '"'); },
+  delRunOk(el) { delete S.runs[el.dataset.date]; save(); closeSheet(); render(); toast('Sortie supprimée.'); },
   clearFlag() { S.runClearedAt = today(); save(); render(); toast('Signal levé. Reprends en douceur.'); },
   addWeightQuick() { const v = document.getElementById('wQuick').value; if (addWeight(today(), v)) render(); },
   addWeight() { const d = document.getElementById('wDate').value, v = document.getElementById('wKg').value; ui.weightDate = d; if (addWeight(d, v)) rerender(); },
@@ -3144,6 +3148,7 @@ function captureRunForm() {
   const f = ui.runForm && ui.runForm.f; if (!f) return;
   const m = document.getElementById('rfMinutes'), k = document.getElementById('rfKm'), n = document.getElementById('rfNote');
   if (m) f.minutes = m.value; if (k) f.km = k.value; if (n) f.note = n.value;
+  const d = document.getElementById('rfDate'); if (d && isDate(d.value)) ui.runForm.newDate = d.value;
 }
 
 /* ---- retours tactiles : onde, ressort, vibration légère ---- */
