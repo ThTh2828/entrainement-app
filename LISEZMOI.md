@@ -2,21 +2,46 @@
 
 Élan, ton programme de musculation et de course sur huit semaines.
 
-Application web (PWA) sans compte, sans serveur et sans envoi de données. Tout est dans `index.html` ; les autres fichiers servent à l’installation et au hors-connexion.
+Application web (PWA) sans compte, sans serveur et sans envoi de données. Pas de compilation : les fichiers sont servis tels quels.
 
 ```
-index.html             l’application complète (polices et illustrations incluses)
-manifest.webmanifest   nom, couleurs et icônes pour l’écran d’accueil
-sw.js                  copie locale pour fonctionner hors connexion
-icons/                 icônes de l’application
+index.html               la page : structure de l’écran et chargement des fichiers ci-dessous
+css/polices.css          polices incluses (hors connexion)
+css/elan.css             tout le style, thèmes compris
+js/figure.js             silhouettes articulées des illustrations
+js/programme.js          les 8 semaines, les séances A et B, les exercices et leurs consignes
+js/etat.js               outils de dates, profil par défaut, lecture et enregistrement des données
+js/cloud.js              sauvegarde cloud chiffrée (Gist)
+js/calendrier-coach.js   calendrier, règles de progression, coach, série et badges
+js/mannequin3d.js        mannequin 3D (Three.js chargé à la demande)
+js/interface.js          composants, écran Aujourd’hui, écran Programme, feuilles
+js/progression-profil.js écrans Progression et Profil
+js/seance.js             séance plein écran et minuteur de repos
+js/voix.js               mode mains libres (annonces vocales)
+js/impression.js         version A4 imprimable
+js/accueil.js            écran d’accueil du premier lancement
+js/app.js                navigation, actions, démarrage (toujours en dernier)
+manifest.webmanifest     nom, couleurs et icônes pour l’écran d’accueil
+sw.js                    copie locale pour fonctionner hors connexion
+icons/, vendor/          icônes, Three.js
 ```
+
+Les scripts partagent les mêmes variables globales et se chargent dans l’ordre de `index.html` : garde `app.js` en dernier, car c’est lui qui démarre l’application.
+
+## Mettre à jour l’application
+
+1. Modifie les fichiers, puis envoie-les sur GitHub.
+2. Dans `sw.js`, **incrémente le numéro de `CACHE`** (`elan-v5` → `elan-v6`…). Si tu as créé un fichier, ajoute-le aussi à la liste `CODE` de `sw.js` et dans `index.html`.
+3. Sur le téléphone, ouvre l’application avec du réseau, ferme-la complètement, puis rouvre-la : la nouvelle version est installée.
+
+Le code (HTML, CSS, JS) est toujours relu sur le réseau quand il y en a ; le numéro de cache sert à renouveler la copie hors connexion et à supprimer l’ancienne.
 
 ## L’installer sur ton téléphone
 
 Une vraie installation demande une adresse **https**. Le plus simple et gratuit : GitHub Pages.
 
 1. Crée un compte sur github.com, puis un nouveau dépôt (par exemple `entrainement`).
-2. Dans le dépôt : « Add file » → « Upload files », dépose **le contenu** de ce dossier (index.html, manifest.webmanifest, sw.js et le dossier icons), puis valide.
+2. Dans le dépôt : « Add file » → « Upload files », dépose **le contenu** de ce dossier (index.html, manifest.webmanifest, sw.js et les dossiers css, js, icons et vendor), puis valide.
 3. « Settings » → « Pages » → source « Deploy from a branch », branche `main`, dossier `/ (root)`, puis « Save ».
 4. Après une à deux minutes, l’adresse s’affiche : `https://ton-pseudo.github.io/entrainement/`.
 5. Sur le téléphone :
@@ -24,13 +49,31 @@ Une vraie installation demande une adresse **https**. Le plus simple et gratuit 
    - **Android** : ouvre l’adresse dans **Chrome**, menu ⋮, « Installer l’application » (ou « Ajouter à l’écran d’accueil »).
 6. Ouvre l’application une fois avec du réseau : ensuite elle fonctionne hors connexion.
 
-**Confidentialité.** `index.html` contient tes valeurs par défaut (prénom, taille, poids de départ). Un site GitHub Pages est consultable par toute personne qui connaît son adresse, et un dépôt gratuit est public. Si tu ne le souhaites pas, remplace ces valeurs dans le fichier avant de le publier. Tes saisies (séances, poids, sorties), elles, ne quittent jamais ton téléphone.
+**Confidentialité.** Les fichiers publiés ne contiennent aucune donnée personnelle : au premier lancement, un écran d’accueil demande ton prénom, ta taille et ton poids, enregistrés uniquement sur le téléphone. Tes saisies (séances, poids, sorties) ne quittent jamais ton téléphone, sauf si tu actives la sauvegarde cloud chiffrée.
 
 N’importe quel hébergement https de fichiers statiques convient aussi.
 
 ## Le coach
 
 Avant chaque séance, trois touches : sommeil, énergie, courbatures. Le coach les croise avec tes dernières saisies (fatigue, douleur, réserve) et propose un niveau : feu vert, plan normal, séance ajustée (1 série de moins sur les compléments, +15 s de repos) ou version allégée. Tu peux toujours garder le plan normal. Les jours de course, le même bilan donne un conseil de durée. Tout est calculé sur le téléphone, sans connexion.
+
+## Premier lancement
+
+Un écran d’accueil demande ton prénom (obligatoire), ta taille et ton poids actuel (facultatifs). Le repère protéines est calculé à environ 1,6 g par kg ; tout se modifie ensuite dans Profil. Si tu as déjà une sauvegarde (cloud ou fichier `.json`), restaure-la directement depuis cet écran.
+
+Les données d’une version précédente sont reprises telles quelles : l’accueil ne s’affiche pas.
+
+## Mode mains libres
+
+Pendant une séance, le bouton haut-parleur (à côté de pause) active une voix qui annonce :
+
+- l’exercice, le nombre de séries et la fourchette de répétitions ;
+- la série validée et la durée du repos ;
+- « 10 secondes » avant la fin du repos, puis la série ou l’exercice suivant ;
+- le chrono des gainages, toutes les 10 secondes ;
+- la fin de la séance.
+
+Le réglage se trouve aussi dans Profil → Affichage et son. La voix est celle du téléphone, sans connexion. Comme pour la sonnerie, rien n’est garanti écran verrouillé : laisse l’application ouverte (l’écran reste allumé pendant la séance).
 
 ## Sauvegarde cloud
 
