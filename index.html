@@ -332,6 +332,15 @@ table.t td { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--line); } tab
 .fig circle.ff { fill: var(--fig-far); stroke: none; }
 .fig .fill { fill: var(--fig); }
 .fig .w-arm { stroke-width: 8.5px; } .fig .w-leg { stroke-width: 11px; } .fig .w-foot { stroke-width: 6.5px; } .fig .w-arm-s { stroke-width: 5px; }
+.fig { --skin: #D59B72; --skin2: #B67D57; --olive: #6E7C4B; --olive2: #57633B; --cloth-w: #FFFFFF; --cloth-w2: #E3E9E6; --hair: #3A2A21; --outl: #B9C6C1; }
+.fig [class^="a-"] { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.fig path.a-sk { stroke: var(--skin); } .fig path.a-sk2 { stroke: var(--skin2); } .fig circle.a-sk { fill: var(--skin); } .fig circle.a-sk2 { fill: var(--skin2); }
+.fig path.a-ol { stroke: var(--olive); } .fig path.a-ol2 { stroke: var(--olive2); } .fig circle.a-ol { fill: var(--olive); }
+.fig path.a-top { stroke: var(--olive); fill: var(--olive); }
+.fig path.a-ln { stroke: var(--outl); } .fig path.a-wh { stroke: var(--cloth-w); } .fig path.a-wh2 { stroke: var(--cloth-w2); }
+.fig path.a-shoe { stroke: var(--cloth-w); } .fig path.a-shoe2 { stroke: var(--cloth-w2); }
+.fig path.a-sole { stroke: var(--run); stroke-width: 2.6px; }
+.fig circle.a-hair { fill: var(--hair); }
 .fig .mat { fill: var(--mat); } .fig .wall { fill: var(--line2); }
 .fig .fx-band, .fig .fx-line { stroke: var(--run); stroke-width: 3px; fill: none; stroke-linecap: round; }
 .fig .inset-bg { fill: var(--glass2); stroke: var(--line2); } .fig .inset-t { fill: var(--muted); font: 500 9px var(--f-body); }
@@ -502,7 +511,7 @@ body.insession #toast { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); 
 .pr .exc .pair figcaption { color: #44514E; }
 .pr .exc ol, .pr .exc ul { margin: 0; padding-left: 16px; }
 .pr .exc .k { font-weight: 700; }
-.pr .fig { background: #F2F6F4; --fig: #18201F; --fig-far: #8D9B98; --mat: #D5DDDA; --run: #C9573A; --line2: #C5CFCC; --glass2: #fff; --muted: #44514E; }
+.pr .fig { --run: #E3664A; background: #F2F6F4; --fig: #18201F; --fig-far: #8D9B98; --mat: #D5DDDA; --run: #C9573A; --line2: #C5CFCC; --glass2: #fff; --muted: #44514E; }
 .pr .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .pr .box { border: 1px solid #C5CFCC; border-radius: 10px; padding: 10px; break-inside: avoid; }
 .pr .blank td { height: 22px; }
@@ -598,30 +607,48 @@ const FIG = (() => {
   }
   const P = pts => pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ');
 
-  // ordre de dessin (arrière -> avant)
+  // Athlète illustré : peau, débardeur et short olive, cuissard et chaussettes blancs, baskets à semelle corail.
+  const lp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   function parts(p, o, ex) {
-    const front = !!p.front;
-    const far = front ? 'fg' : 'ff';
-    const list = [
-      { k: 'bx', t: 'path', c: 'fx-band', d: '' },
-      { k: 'armF', t: 'path', c: far + ' w-arm', d: P(o.armF) },
-      { k: 'legF', t: 'path', c: far + ' w-leg', d: P(o.legF) },
-      { k: 'footF', t: 'path', c: far + ' w-foot', d: P(o.footF) },
-      { k: 'handF', t: 'circle', c: far, cx: o.armF[2][0], cy: o.armF[2][1], r: p.handR ?? 4 },
-      { k: 'torso', t: 'path', c: 'fg fill', d: P([o.sN, o.sF, o.hF, o.hN]) + ' Z', sw: p.torsoW ?? 17 },
-      { k: 'head', t: 'circle', c: 'fg', cx: o.head[0], cy: o.head[1], r: L.head },
-      { k: 'legN', t: 'path', c: 'fg w-leg', d: P(o.legN) },
-      { k: 'footN', t: 'path', c: 'fg w-foot', d: P(o.footN) },
-      { k: 'armN', t: 'path', c: 'fg w-arm', d: P(o.armN) },
-      { k: 'handN', t: 'circle', c: 'fg', cx: o.armN[2][0], cy: o.armN[2][1], r: p.handR ?? 4 },
-      { k: 'fx', t: 'path', c: 'fx-band', d: '' },
-      { k: 'fx2', t: 'path', c: 'fx-line', d: '' }
-    ];
-    if (ex.extras) {
-      const e = ex.extras(o, p) || {};
-      for (const it of list) if (e[it.k] != null) it.d = e[it.k];
+    const front = !!p.front, L2 = [];
+    const fdir = dir(o.tA + 90), up = dir(o.tA);
+    const path = (k, c, pts, sw, close) => L2.push({ k, t: 'path', c, d: P(pts) + (close ? ' Z' : ''), sw });
+    const circ = (k, c, pt, r) => L2.push({ k, t: 'circle', c, cx: pt[0], cy: pt[1], r });
+    const arm = (side, a) => {
+      const f = side === 'F' && !front ? '2' : '';
+      path('ua' + side, 'a-sk' + f, [a[0], a[1]], 10.5);
+      path('fa' + side, 'a-sk' + f, [a[1], a[2]], 8.6);
+      circ('hd' + side, 'a-sk' + f, a[2], p.handR ?? 4.4);
+    };
+    const leg = (side, g, ft) => {
+      const f = side === 'F' && !front ? '2' : '';
+      path('sh' + side, 'a-ol' + f, [g[0], lp2(g[0], g[1], .52)], 15);
+      path('cuO' + side, 'a-ln', [lp2(g[0], g[1], .5), lp2(g[0], g[1], .64)], 15);
+      path('cu' + side, 'a-wh' + f, [lp2(g[0], g[1], .5), lp2(g[0], g[1], .64)], 13.2);
+      path('th' + side, 'a-sk' + f, [lp2(g[0], g[1], .63), g[1]], 12);
+      path('sn' + side, 'a-sk' + f, [g[1], lp2(g[1], g[2], .55)], 10.6);
+      path('soO' + side, 'a-ln', [lp2(g[1], g[2], .52), g[2]], 12);
+      path('so' + side, 'a-wh' + f, [lp2(g[1], g[2], .52), g[2]], 10.2);
+      path('shoO' + side, 'a-ln', ft, 10.8);
+      path('sho' + side, 'a-shoe' + f, ft, 8.8);
+      const n = dir(ang(ft[0], ft[1]) + 90);
+      path('sol' + side, 'a-sole', [add(ft[0], mul(n, 3)), add(ft[1], mul(n, 3))], 2.8);
+    };
+    L2.push({ k: 'bx', t: 'path', c: 'fx-band', d: '' });
+    arm('F', o.armF); leg('F', o.legF, o.footF);
+    if (front) path('torso', 'a-top', [o.sN, o.sF, o.hF, o.hN], p.torsoW ?? 9, true);
+    else {
+      const H = o.hip, S = o.S, m = lp2(H, S, .66), w = lp2(H, S, .42);
+      path('torso', 'a-top', [add(H, mul(fdir, 8.5)), add(w, mul(fdir, 10)), add(m, mul(fdir, 12.8)), add(S, mul(fdir, 9.5)), add(S, mul(fdir, -10.5)), add(m, mul(fdir, -10.5)), add(w, mul(fdir, -8.6)), add(H, mul(fdir, -9.5))], 4, true);
+      circ('hipb', 'a-ol', H, 9.6);
     }
-    return list;
+    path('neck', 'a-sk', [o.S, lp2(o.S, o.head, .75)], 8);
+    if (front) { circ('hair', 'a-hair', add(o.head, mul(up, 2.6)), 10.9); circ('face', 'a-sk', add(o.head, mul(up, -1)), 10.1); }
+    else { circ('hair', 'a-hair', add(add(o.head, mul(fdir, -2.6)), mul(up, 2.2)), 11); circ('face', 'a-sk', add(o.head, mul(fdir, 1)), 10.1); }
+    leg('N', o.legN, o.footN); arm('N', o.armN);
+    L2.push({ k: 'fx', t: 'path', c: 'fx-band', d: '' }, { k: 'fx2', t: 'path', c: 'fx-line', d: '' });
+    if (ex.extras) { const e = ex.extras(o, p) || {}; for (const it of L2) if (e[it.k] != null) it.d = e[it.k]; }
+    return L2;
   }
 
   const VB = '0 0 320 190';
